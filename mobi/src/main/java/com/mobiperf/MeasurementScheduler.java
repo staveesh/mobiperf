@@ -84,7 +84,7 @@ public class MeasurementScheduler extends Service {
 
   // This arbitrary id is private to Speedometer
   private static final int NOTIFICATION_ID = 1234;
-  private static final String CHANNEL_ID = "";
+  private static final String CHANNEL_ID = "speedometer_01";
 
   private ExecutorService measurementExecutor;
   private BroadcastReceiver broadcastReceiver;
