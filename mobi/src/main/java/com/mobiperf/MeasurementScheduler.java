@@ -16,6 +16,7 @@ package com.mobiperf;
 
 import android.app.AlarmManager;
 import android.app.Notification;
+import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
@@ -25,8 +26,10 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.os.Binder;
+import android.os.Build;
 import android.os.IBinder;
 import android.preference.PreferenceManager;
+import android.support.v4.app.NotificationCompat;
 
 import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
@@ -81,6 +84,7 @@ public class MeasurementScheduler extends Service {
 
   // This arbitrary id is private to Speedometer
   private static final int NOTIFICATION_ID = 1234;
+  private static final String CHANNEL_ID = "";
 
   private ExecutorService measurementExecutor;
   private BroadcastReceiver broadcastReceiver;
@@ -241,6 +245,7 @@ public class MeasurementScheduler extends Service {
     };
     this.registerReceiver(broadcastReceiver, filter);
     // TODO(mdw): Make this a user-selectable option
+    createNotificationChannel(); //register the notification channel
     addIconToStatusBar();
   }
 
@@ -258,18 +263,36 @@ public class MeasurementScheduler extends Service {
         PendingIntent.getActivity(this, 0, intent,
             PendingIntent.FLAG_CANCEL_CURRENT);
 
-    // This constructor is deprecated in 3.x. But most phones still run 2.x systems
-    Notification notice =
-        new Notification(R.drawable.icon_statusbar,
-            getString(R.string.notificationSchedulerStarted),
-            System.currentTimeMillis());
+    Notification notice = new NotificationCompat.Builder(this, CHANNEL_ID)
+            .setSmallIcon(R.drawable.icon_statusbar)
+            .setContentTitle(getString(R.string.notificationSchedulerStarted))
+            .setWhen(System.currentTimeMillis())
+            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+            .setContentIntent(pendIntent)
+            .build();
     notice.flags |=
-        Notification.FLAG_NO_CLEAR | Notification.FLAG_ONGOING_EVENT;
+            Notification.FLAG_NO_CLEAR | Notification.FLAG_ONGOING_EVENT;
 
     // This is deprecated in 3.x. But most phones still run 2.x systems
    // notice.setLatestEventInfo(this, getString(R.string.app_name),
      //   getString(R.string.notificationServiceRunning), pendIntent);
     return notice;
+  }
+
+  private void createNotificationChannel() {
+    // Create the NotificationChannel, but only on API 26+ because
+    // the NotificationChannel class is new and not in the support library
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+      CharSequence name = getString(R.string.channel_name);
+      String description = getString(R.string.channel_description);
+      int importance = NotificationManager.IMPORTANCE_DEFAULT;
+      NotificationChannel channel = new NotificationChannel(CHANNEL_ID, name, importance);
+      channel.setDescription(description);
+      // Register the channel with the system; you can't change the importance
+      // or other notification behaviors after this
+      NotificationManager notificationManager = getSystemService(NotificationManager.class);
+      notificationManager.createNotificationChannel(channel);
+    }
   }
 
   /**
