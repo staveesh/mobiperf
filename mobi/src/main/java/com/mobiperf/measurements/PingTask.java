@@ -173,14 +173,23 @@ public class PingTask extends MeasurementTask {
     try {
       Logger.i("running ping command");
       // Prevents the phone from going to low-power mode where WiFi turns off
-      return executePingCmdTask(ipByteLength);
+      MeasurementResult result=executePingCmdTask(ipByteLength);
+      Util.sendResult(MeasurementJsonConvertor.toJsonString(result),DESCRIPTOR);
+      Logger.d("Ping Result sending initiated");
+      return result;
     } catch (MeasurementError e) {
       try {
         Logger.i("running java ping");
-        return executeJavaPingTask();
+        MeasurementResult result=executeJavaPingTask();
+        Util.sendResult(MeasurementJsonConvertor.toJsonString(result),DESCRIPTOR);
+        Logger.d("Java Ping Result sending initiated");
+        return result;
       } catch (MeasurementError ee) {
         Logger.i("running http ping");
-        return executeHttpPingTask();
+        MeasurementResult result=executeHttpPingTask();
+        Util.sendResult(MeasurementJsonConvertor.toJsonString(result),DESCRIPTOR);
+        Logger.d("http Ping Result sending initiated");
+        return result;
       }
     }
   }

@@ -59,6 +59,7 @@ import com.mobiperf.MeasurementTask;
 import com.mobiperf.RRCTrafficControl;
 import com.mobiperf.util.MeasurementJsonConvertor;
 import com.mobiperf.util.PhoneUtils;
+import com.mobiperf.util.Util;
 
 
 /**
@@ -718,7 +719,10 @@ public class RRCTask extends MeasurementTask {
   @Override
   public MeasurementResult call() throws MeasurementError {
     RRCDesc desc = runInferenceTests();
-    return constructResultStandard(desc);
+    MeasurementResult result=constructResultStandard(desc);
+    Util.sendResult(MeasurementJsonConvertor.toJsonString(result),DESCRIPTOR);
+    Logger.d("RRCTask Results sending initiated");
+    return result;
   }
 
   @Override

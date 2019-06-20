@@ -97,4 +97,10 @@ public interface Config {
   
   /** Constants for the splash screen */
   public static final long SPLASH_SCREEN_DURATION_MSEC = 1500;
+
+
+  /** Constants to access the server **/
+  public static String SERVER_ADDRESS="";
+  public static int SERVER_PORT=7000;
+
 }

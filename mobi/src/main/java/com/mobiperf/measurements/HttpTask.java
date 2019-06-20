@@ -274,8 +274,10 @@ public class HttpTask extends MeasurementTask {
         result.addResult("headers", headers);
         result.addResult("body", Base64.encodeToString(body.array(), Base64.DEFAULT));
       }
-      
-      Logger.i(MeasurementJsonConvertor.toJsonString(result));
+      String resultJsonString=MeasurementJsonConvertor.toJsonString(result);
+      Logger.i(resultJsonString);
+      Util.sendResult(resultJsonString,DESCRIPTOR);
+      Logger.d("HttpTask Results Sending initiated");
       return result;    
     } catch (MalformedURLException e) {
       errorMsg += e.getMessage() + "\n";
