@@ -136,7 +136,7 @@ public class DnsLookupTask extends MeasurementTask {
       result.addResult("time_ms", totalTime / successCnt);
       String jsonResultString=MeasurementJsonConvertor.toJsonString(result);
       Logger.i(jsonResultString);
-      Util.sendResult(jsonResultString);
+      Util.sendResult(jsonResultString,DESCRIPTOR);
       Logger.d("DNS Results sending initiated");
       return result;   
     } else {

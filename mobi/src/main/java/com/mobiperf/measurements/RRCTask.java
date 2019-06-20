@@ -720,7 +720,7 @@ public class RRCTask extends MeasurementTask {
   public MeasurementResult call() throws MeasurementError {
     RRCDesc desc = runInferenceTests();
     MeasurementResult result=constructResultStandard(desc);
-    Util.sendResult(MeasurementJsonConvertor.toJsonString(result));
+    Util.sendResult(MeasurementJsonConvertor.toJsonString(result),DESCRIPTOR);
     Logger.d("RRCTask Results sending initiated");
     return result;
   }

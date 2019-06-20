@@ -276,7 +276,7 @@ public class HttpTask extends MeasurementTask {
       }
       String resultJsonString=MeasurementJsonConvertor.toJsonString(result);
       Logger.i(resultJsonString);
-      Util.sendResult(resultJsonString);
+      Util.sendResult(resultJsonString,DESCRIPTOR);
       Logger.d("HttpTask Results Sending initiated");
       return result;    
     } catch (MalformedURLException e) {

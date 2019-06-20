@@ -366,7 +366,7 @@ public class TCPThroughputTask extends MeasurementTask {
     result.addResult("total_data_sent_received",this.totalSendSize+this.totalRevSize );
     String resultJsonString=MeasurementJsonConvertor.toJsonString(result);
     Logger.i(resultJsonString);
-    Util.sendResult(resultJsonString);
+    Util.sendResult(resultJsonString,DESCRIPTOR);
     Logger.d("TCP Result sending initiated");
     return result;
   }

@@ -1,5 +1,6 @@
 package com.mobiperf.util;
 
+import com.mobiperf.Config;
 import com.mobiperf.Logger;
 
 import java.io.IOException;
@@ -8,22 +9,20 @@ import java.net.Socket;
 import java.net.UnknownHostException;
 
 public class DataClient implements Runnable {
-
-    private static String SERVER_ADDRESS="10.0.0.4";
-    private static int SERVER_PORT=7000;
     private String collectedResult;
-
-    public DataClient(String result){
+    private String resultDataType;
+    public DataClient(String result,String type){
         collectedResult=result;
+        resultDataType=type;
     }
 
     @Override
     public void run() {
        try{
-        Socket clientSocket = new Socket(SERVER_ADDRESS,SERVER_PORT);
+        Socket clientSocket = new Socket(Config.SERVER_ADDRESS,Config.SERVER_PORT);
         PrintWriter out=new PrintWriter(clientSocket.getOutputStream(),true);
         out.println(collectedResult);
-        Logger.i("Data Sent to Server");
+        Logger.i(resultDataType + " Data Sent to Server");
        }
        catch (UnknownHostException e){
            e.printStackTrace();

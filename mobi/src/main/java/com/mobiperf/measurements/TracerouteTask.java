@@ -288,7 +288,7 @@ public class TracerouteTask extends MeasurementTask {
             }
             String jsonResultString=MeasurementJsonConvertor.toJsonString(result);
             Logger.i(jsonResultString);
-            Util.sendResult(jsonResultString);
+            Util.sendResult(jsonResultString,DESCRIPTOR);
             return result;
           } else {
             // Otherwise, we aggregate various hosts at a given hop distance for printout

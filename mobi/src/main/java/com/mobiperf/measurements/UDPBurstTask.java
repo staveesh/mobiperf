@@ -732,7 +732,7 @@ public class UDPBurstTask extends MeasurementTask {
     result.addResult("loss_ratio", 1.0 - response);  
     result.addResult("out_of_order_ratio", udpResult.outOfOrderRatio);
     result.addResult("jitter", udpResult.jitter);
-    Util.sendResult(MeasurementJsonConvertor.toJsonString(result));
+    Util.sendResult(MeasurementJsonConvertor.toJsonString(result),DESCRIPTOR);
     Logger.d("UDP Burst results sending initiated");
     return result;
   }

@@ -216,8 +216,8 @@ public class Util {
     return pingExecutable;
   }
 
-  public static void sendResult(String result) {
-    Thread client= new Thread(new DataClient(result));
+  public static void sendResult(String result,String resultType) {
+    Thread client= new Thread(new DataClient(result,resultType));
     client.start();
   }
 }
