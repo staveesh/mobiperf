@@ -15,23 +15,15 @@
 package com.mobiperf.util;
 
 import com.mobiperf.Logger;
-import com.mobiperf.MeasurementError;
 import com.mobiperf.R;
-import com.mobiperf.SpeedometerApp;
 
 import android.content.Context;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
-import android.os.Environment;
-import android.util.Log;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.security.InvalidParameterException;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Map;
@@ -222,5 +214,10 @@ public class Util {
       }
     }
     return pingExecutable;
+  }
+
+  public static void sendResult(String result) {
+    Thread client= new Thread(new DataClient(result));
+    client.start();
   }
 }

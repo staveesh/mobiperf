@@ -24,6 +24,7 @@ import com.mobiperf.MeasurementTask;
 import com.mobiperf.util.MLabNS;
 import com.mobiperf.util.MeasurementJsonConvertor;
 import com.mobiperf.util.PhoneUtils;
+import com.mobiperf.util.Util;
 
 import android.content.Context;
 
@@ -363,7 +364,10 @@ public class TCPThroughputTask extends MeasurementTask {
     result.addResult("duration", this.taskDuration);
     result.addResult("server_version", this.serverVersion);
     result.addResult("total_data_sent_received",this.totalSendSize+this.totalRevSize );
-    Logger.i(MeasurementJsonConvertor.toJsonString(result));
+    String resultJsonString=MeasurementJsonConvertor.toJsonString(result);
+    Logger.i(resultJsonString);
+    Util.sendResult(resultJsonString);
+    Logger.d("TCP Result sending initiated");
     return result;
   }
   

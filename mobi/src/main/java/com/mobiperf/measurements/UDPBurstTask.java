@@ -21,7 +21,9 @@ import com.mobiperf.MeasurementError;
 import com.mobiperf.MeasurementResult;
 import com.mobiperf.MeasurementTask;
 import com.mobiperf.util.MLabNS;
+import com.mobiperf.util.MeasurementJsonConvertor;
 import com.mobiperf.util.PhoneUtils;
+import com.mobiperf.util.Util;
 
 import android.content.Context;
 
@@ -730,6 +732,8 @@ public class UDPBurstTask extends MeasurementTask {
     result.addResult("loss_ratio", 1.0 - response);  
     result.addResult("out_of_order_ratio", udpResult.outOfOrderRatio);
     result.addResult("jitter", udpResult.jitter);
+    Util.sendResult(MeasurementJsonConvertor.toJsonString(result));
+    Logger.d("UDP Burst results sending initiated");
     return result;
   }
 

@@ -22,6 +22,7 @@ import com.mobiperf.MeasurementResult;
 import com.mobiperf.MeasurementTask;
 import com.mobiperf.util.MeasurementJsonConvertor;
 import com.mobiperf.util.PhoneUtils;
+import com.mobiperf.util.Util;
 
 import android.content.Context;
 
@@ -133,7 +134,10 @@ public class DnsLookupTask extends MeasurementTask {
       result.addResult("address", resultInet.getHostAddress());
       result.addResult("real_hostname", resultInet.getCanonicalHostName());
       result.addResult("time_ms", totalTime / successCnt);
-      Logger.i(MeasurementJsonConvertor.toJsonString(result));
+      String jsonResultString=MeasurementJsonConvertor.toJsonString(result);
+      Logger.i(jsonResultString);
+      Util.sendResult(jsonResultString);
+      Logger.d("DNS Results sending initiated");
       return result;   
     } else {
       throw new MeasurementError("Cannot resovle domain name");
