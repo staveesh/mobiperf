@@ -100,7 +100,7 @@ public interface Config {
 
 
   /** Constants to access the server **/
-  public static String SERVER_ADDRESS="10.0.0.4";
+  public static String SERVER_ADDRESS="";
   public static int SERVER_PORT=7000;
 
 }
