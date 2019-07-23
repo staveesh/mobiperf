@@ -22,9 +22,8 @@ import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.os.Bundle;
 import android.os.Handler;
+import android.support.v7.app.AppCompatActivity;
 import android.widget.TextView;
-
-import com.mobiperf.R;
 
 /**
  * The splash screen for Speedometer
