@@ -89,7 +89,7 @@ public class MeasurementScheduler extends Service {
 
   private ExecutorService measurementExecutor;
   private BroadcastReceiver broadcastReceiver;
-  private Boolean pauseRequested = true;
+  private Boolean pauseRequested = false;
   private boolean stopRequested = false;
   private boolean isSchedulerStarted = false;
   private Checkin checkin;
@@ -98,7 +98,7 @@ public class MeasurementScheduler extends Service {
   private int checkinRetryCnt;
   private CheckinTask checkinTask;
   private Calendar lastCheckinTime;
-
+  private static MeasurementScheduler scheduler;
   private PendingIntent checkinIntentSender;
   /**
    * Intent for checkin retries. Reusing checkinIntentSender for retries will cancel any previously
@@ -158,6 +158,7 @@ public class MeasurementScheduler extends Service {
   @Override
   public void onCreate() {
     Logger.d("Service onCreate called");
+    scheduler=new MeasurementScheduler();
     PhoneUtils.setGlobalContext(this.getApplicationContext());
     phoneUtils = PhoneUtils.getPhoneUtils();
     phoneUtils.registerSignalStrengthListener();
@@ -165,8 +166,7 @@ public class MeasurementScheduler extends Service {
     this.checkinRetryIntervalSec = Config.MIN_CHECKIN_RETRY_INTERVAL_SEC;
     this.checkinRetryCnt = 0;
     this.checkinTask = new CheckinTask();
-
-    this.pauseRequested = true;
+    this.pauseRequested = false;
     this.stopRequested = false;
     this.measurementExecutor = Executors.newSingleThreadExecutor();
     this.taskQueue =
@@ -345,8 +345,12 @@ public class MeasurementScheduler extends Service {
      * The CPU can go back to sleep immediately after onReceive() returns. Acquire the wake lock for
      * the new thread here and release the lock when the thread finishes
      */
-    PhoneUtils.getPhoneUtils().acquireWakeLock();
-    new Thread(checkinTask).start();
+    //PhoneUtils.getPhoneUtils().acquireWakeLock();
+    //new Thread(checkinTask).start();
+  }
+
+  public static MeasurementScheduler getMeasurementScheduler(){
+    return scheduler;
   }
 
   private void handleMeasurement() {
@@ -473,6 +477,7 @@ public class MeasurementScheduler extends Service {
        * application. So don't worry about setting isSchedulerStarted to false.
        */
       isSchedulerStarted = true;
+
     }
     return START_STICKY;
   }
@@ -838,12 +843,9 @@ public class MeasurementScheduler extends Service {
         tasksToAdd.add(newTask);
       } else {
         // check for changes. If any parameter changes, it counts as a change.
-        if (!currentSchedule.get(newKey).getDescription()
-            .equals(newTask.getDescription())) {
           // If there's a change, replace the task with the new task from the server
           keysToRemove.add(newKey);
           tasksToAdd.add(newTask);
-        }
         // We've seen the task
         missingKeys.remove(newKey);
       }
@@ -1139,14 +1141,15 @@ public class MeasurementScheduler extends Service {
     Logger.i("A total of " + results.length() + " is in the results list");
   }
 
-  private class CheckinTask implements Runnable {
+
+  public class CheckinTask implements Runnable {
     @Override
     public void run() {
       Logger.i("checking Speedometer service for new tasks");
       lastCheckinTime = Calendar.getInstance();
       try {
-        persistState();
-        uploadResults();
+        //persistState();
+       // uploadResults();
         getTasksFromServer();
         // Also reset checkin if we get a success
         resetCheckin();
@@ -1471,4 +1474,5 @@ public class MeasurementScheduler extends Service {
   public synchronized List<String> getSystemConsole() {
     return Collections.unmodifiableList(systemConsole);
   }
+
 }

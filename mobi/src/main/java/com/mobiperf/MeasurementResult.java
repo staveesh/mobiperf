@@ -37,6 +37,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Formatter;
 import java.util.HashMap;
+import java.util.Map;
 
 /**
  * POJO that represents the result of a measurement
@@ -54,7 +55,7 @@ public class MeasurementResult {
     private String type;
     private MeasurementDesc parameters;
     private HashMap<String, String> values;
-
+    private boolean isExperiment;
     /**
      * @param deviceProperty
      * @param type
@@ -72,28 +73,18 @@ public class MeasurementResult {
         this.timestamp = timeStamp;
         this.success = success;
         this.parameters = measurementDesc;
+        this.isExperiment=hasExperimentTag(parameters.parameters);
         this.parameters.parameters = null;
-        this.accountName = hashUserName(SpeedometerApp.getCurrentApp().getSelectedAccount());
+        this.accountName =SpeedometerApp.getCurrentApp().getSelectedAccount();
         this.values = new HashMap<>();
     }
 
-    private String hashUserName(String userName) {
-        if (userName.equals("Anonymous")) {
-            return userName;
+    private boolean hasExperimentTag(Map<String,String> map){
+        boolean experiment=false;
+        if(map.containsKey("Experiment")){
+            experiment=true;
         }
-        MessageDigest md = null;
-        try {
-            md = MessageDigest.getInstance("MD5");
-        } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
-        }
-        byte[] hashInBytes = md.digest(userName.getBytes(StandardCharsets.UTF_8));
-
-        StringBuilder sb = new StringBuilder();
-        for (byte b : hashInBytes) {
-            sb.append(String.format("%02x", b));
-        }
-        return sb.toString();
+        return experiment;
     }
 
     /* Returns the type of this result */

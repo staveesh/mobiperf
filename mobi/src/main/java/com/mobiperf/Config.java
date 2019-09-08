@@ -51,7 +51,7 @@ public interface Config {
   int MAX_CHECKIN_RETRY_COUNT = 3;
   long PAUSE_BETWEEN_CHECKIN_CHANGE_MSEC = 2 * 1000L;
   // default minimum battery percentage to run measurements
-  int DEFAULT_BATTERY_THRESH_PRECENT = 60;
+  int DEFAULT_BATTERY_THRESH_PRECENT = 10;
   boolean DEFAULT_MEASURE_WHEN_CHARGE = true;
   long MIN_TIME_BETWEEN_MEASUREMENT_ALARM_MSEC = 3 * 1000L;
   
@@ -76,7 +76,7 @@ public interface Config {
   
   int MAX_USER_MEASUREMENT_COUNT = 10;
   
-  long MIN_CHECKIN_INTERVAL_SEC = 3600;
+  long MIN_CHECKIN_INTERVAL_SEC = 120;
   
   String PREF_KEY_SYSTEM_CONSOLE = "PREF_KEY_SYSTEM_CONSOLE";
   String PREF_KEY_STATUS_BAR = "PREF_KEY_STATUS_BAR";
@@ -92,6 +92,19 @@ public interface Config {
   
   
   int DEFAULT_DATA_MONITOR_PERIOD_DAY= 1;
+
+
+
+
+
+
+
+
+
+
+
+
+
   
   
   
@@ -100,12 +113,9 @@ public interface Config {
 
 
   /** Constants to access the server **/
-  String SERVER_ADDRESS="196.24.165.60";
+  String SERVER_ADDRESS="10.0.0.4";
   int SERVER_PORT=7000;
-
-  String CHECKIN_SEVER_ADDRESS = "196.24.138.158";
-  int CHECKIN_SERVER_PORT= 8000;
-
+  String SERVER_HOST_ADDRESS = "jchavula-1.cs.uct.ac.za";
   /** Enum for all the permissions that we need*/
   enum PERMISSION_IDS {
     INTERNET, GET_ACCOUNTS, READ_PHONE_STATE, ACCESS_NETWORK_STATE, ACCESS_WIFI_STATE, WAKE_LOCK, RECEIVE_BOOT_COMPLETED, ACCESS_COARSE_LOCATION
