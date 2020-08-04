@@ -382,7 +382,7 @@ public class Checkin {
             JSONObject request = null;
             try {
                 request = new JSONObject();
-                request.put("request_type", CHECK_IN_TAG);
+                request.put("requestType", CHECK_IN_TAG);
                 return request;
             } catch (JSONException e) {
                 e.printStackTrace();

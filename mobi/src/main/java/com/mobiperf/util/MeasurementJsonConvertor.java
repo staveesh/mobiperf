@@ -59,7 +59,7 @@ public class MeasurementJsonConvertor {
    */
   public static Gson gson = new GsonBuilder().serializeNulls().
       registerTypeAdapter(Date.class, new DateTypeConverter()).
-      setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES).create();
+      setFieldNamingPolicy(FieldNamingPolicy.IDENTITY).create();
   private static final DateFormat dateFormat = 
       new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
 

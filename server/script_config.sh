@@ -21,7 +21,7 @@
 # with the newer version of python that you use locally and it will break your
 # code once it is uploaded to the development GAE instance.
 
-PYTHON=python2.5
+PYTHON=python2.7
 APPCFG=`which appcfg.py`
 APPSERVER=`which dev_appserver.py`
 

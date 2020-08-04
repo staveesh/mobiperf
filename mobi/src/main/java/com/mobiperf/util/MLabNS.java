@@ -3,6 +3,7 @@ package com.mobiperf.util;
 import com.mobiperf.Logger;
 
 import android.content.Context;
+import android.util.Log;
 
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -77,6 +78,7 @@ public class MLabNS {
       if (address_family == "ipv4" || address_family == "ipv6") {
         url += "&address_family=" + address_family;
       }
+      Logger.i("MLAB-NS URL "+url);
       HttpGet request = new HttpGet(url);
       request.setHeader("User-Agent", Util.prepareUserAgent(context));
 

@@ -132,8 +132,8 @@ public class DnsLookupTask extends MeasurementTask {
           phoneUtils.getDeviceProperty(), DnsLookupTask.TYPE, System.currentTimeMillis() * 1000,
           true, this.measurementDesc);
       result.addResult("address", resultInet.getHostAddress());
-      result.addResult("real_hostname", resultInet.getCanonicalHostName());
-      result.addResult("time_ms", totalTime / successCnt);
+      result.addResult("realHostname", resultInet.getCanonicalHostName());
+      result.addResult("timeMs", totalTime / successCnt);
       String jsonResultString=MeasurementJsonConvertor.toJsonString(result);
       Logger.i(jsonResultString);
       Util.sendResult(jsonResultString,DESCRIPTOR);
