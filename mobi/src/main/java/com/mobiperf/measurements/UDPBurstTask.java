@@ -683,15 +683,16 @@ public class UDPBurstTask extends MeasurementTask {
           " for UDPBurstTask");
     }
 
-    ArrayList<String> mlabNSResult = MLabNS.Lookup(context,
-        "mobiperf");
-    if (mlabNSResult.size() == 1) {
-      desc.target = mlabNSResult.get(0);
-    } else {
-      throw new InvalidParameterException("Invalid MLabNS query result"
-          +
-          " for UDPBurstTask");
-    }
+//    ArrayList<String> mlabNSResult = MLabNS.Lookup(context,
+//        "mobiperf");
+//    if (mlabNSResult.size() == 1) {
+//      desc.target = mlabNSResult.get(0);
+//    } else {
+//      throw new InvalidParameterException("Invalid MLabNS query result"
+//          +
+//          " for UDPBurstTask");
+//    }
+    desc.target = Config.SERVER_HOST_ADDRESS;
     Logger.i("Setting target to: " + desc.target);
     
     PhoneUtils phoneUtils = PhoneUtils.getPhoneUtils();

@@ -302,20 +302,21 @@ public class TCPThroughputTask extends MeasurementTask {
     // Apply MLabNS lookup to fetch FQDN
     if (!desc.target.equals(MLabNS.TARGET)) {
       Logger.i("Not using MLab server!");
-      throw new InvalidParameterException("Unknown target " + desc.target +
-                                          " for TCPThroughput");
+//      throw new InvalidParameterException("Unknown target " + desc.target +
+//                                          " for TCPThroughput");
     }
     
-    try {
-       ArrayList<String> mlabResult = MLabNS.Lookup(context, "mobiperf");
-       if (mlabResult.size() == 1) {
-         desc.target = mlabResult.get(0);
-       } else {
-         throw new MeasurementError("Invalid MLabNS result");
-       }
-    } catch (InvalidParameterException e) {
-      throw new MeasurementError(e.getMessage());
-    }
+//    try {
+//       ArrayList<String> mlabResult = MLabNS.Lookup(context, "mobiperf");
+//       if (mlabResult.size() == 1) {
+//         desc.target = mlabResult.get(0);
+//       } else {
+//         throw new MeasurementError("Invalid MLabNS result");
+//       }
+//    } catch (InvalidParameterException e) {
+//      throw new MeasurementError(e.getMessage());
+//    }
+    desc.target = Config.SERVER_HOST_ADDRESS;
     Logger.i("Setting target to: " + desc.target);
     
     PhoneUtils phoneUtils = PhoneUtils.getPhoneUtils();
