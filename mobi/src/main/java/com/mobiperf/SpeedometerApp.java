@@ -21,6 +21,7 @@ import android.app.AppOpsManager;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
@@ -37,6 +38,7 @@ import android.support.design.widget.TabLayout;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.view.ViewPager;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
@@ -46,9 +48,11 @@ import android.view.MenuItem;
 import android.widget.TabHost;
 import android.widget.TextView;
 
+
 import com.mobiperf.MeasurementScheduler.SchedulerBinder;
 
 import java.security.Security;
+import java.util.EnumMap;
 
 /**
  * The main UI thread that manages different tabs
@@ -57,6 +61,9 @@ public class SpeedometerApp extends AppCompatActivity implements TabLayout.OnTab
 
     public static final String TAG = "MobiPerf";
     private static final int REQUEST_ACCOUNTS = 23;
+
+    public static final int PERMISSIONS_REQUEST_CODE = 6789;
+    public static EnumMap<Config.PERMISSION_IDS, Boolean> PERMISSION_SETTINGS;
 
     private boolean userConsented = false;
     private String selectedAccount = null;
@@ -301,8 +308,46 @@ public class SpeedometerApp extends AppCompatActivity implements TabLayout.OnTab
     }
 
     private void requestPermissions() {
-        if (!hasPermissionToReadPhoneStats()) {
-            requestPhoneStateStats();
+        if ((ActivityCompat.checkSelfPermission(this, Manifest.permission.READ_PHONE_STATE)
+                + ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION)
+                + ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION))
+                != PackageManager.PERMISSION_GRANTED) {
+            if (ActivityCompat.shouldShowRequestPermissionRationale(SpeedometerApp.this,
+                    Manifest.permission.READ_PHONE_STATE) ||
+                    ActivityCompat.shouldShowRequestPermissionRationale(SpeedometerApp.this,
+                            Manifest.permission.ACCESS_COARSE_LOCATION) ||
+                    ActivityCompat.shouldShowRequestPermissionRationale(SpeedometerApp.this,
+                            Manifest.permission.ACCESS_FINE_LOCATION)
+            ) {
+                AlertDialog.Builder builder = new AlertDialog.Builder(SpeedometerApp.this);
+                builder.setTitle("Please grant the following permissions");
+                builder.setMessage("Read phone state, Access location");
+                builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int i) {
+                        ActivityCompat.requestPermissions(SpeedometerApp.this,
+                                new String[]{
+                                        Manifest.permission.READ_PHONE_STATE,
+                                        Manifest.permission.ACCESS_FINE_LOCATION,
+                                        Manifest.permission.ACCESS_COARSE_LOCATION
+                                },
+                                PERMISSIONS_REQUEST_CODE
+                        );
+                    }
+                });
+                builder.setNegativeButton("Cancel", null);
+                AlertDialog alertDialog = builder.create();
+                alertDialog.show();
+            } else{
+                ActivityCompat.requestPermissions(SpeedometerApp.this,
+                        new String[]{
+                                Manifest.permission.READ_PHONE_STATE,
+                                Manifest.permission.ACCESS_FINE_LOCATION,
+                                Manifest.permission.ACCESS_COARSE_LOCATION
+                        },
+                        PERMISSIONS_REQUEST_CODE
+                );
+            }
         }
 
         if (!hasPermissionToReadNetworkHistory()) {
@@ -338,16 +383,8 @@ public class SpeedometerApp extends AppCompatActivity implements TabLayout.OnTab
         return false;
     }
 
-    private void requestPhoneStateStats() {
-        ActivityCompat.requestPermissions(SpeedometerApp.getCurrentApp(), new String[]{Manifest.permission.READ_PHONE_STATE}, NetworkSummaryCollector.READ_PHONE_STATE_REQUEST);
-    }
-
     private boolean hasPermissionToReadPhoneStats() {
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.READ_PHONE_STATE) == PackageManager.PERMISSION_DENIED) {
-            return false;
-        } else {
-            return true;
-        }
+        return ActivityCompat.checkSelfPermission(this, Manifest.permission.READ_PHONE_STATE) != PackageManager.PERMISSION_DENIED;
     }
 
 
@@ -391,12 +428,25 @@ public class SpeedometerApp extends AppCompatActivity implements TabLayout.OnTab
         }
     }
 
+    private void initPermMap(){
+        SharedPreferences sharedPref = getPreferences(Context.MODE_PRIVATE);
+        PERMISSION_SETTINGS = new EnumMap<>(Config.PERMISSION_IDS.class);
+        for(Config.PERMISSION_IDS permission_id: Config.PERMISSION_IDS.values()) {
+            /* Assume false when starting*/
+            if(!sharedPref.contains(permission_id.name()))
+                PERMISSION_SETTINGS.put(permission_id, false);
+            else
+                PERMISSION_SETTINGS.put(permission_id, sharedPref.getBoolean(permission_id.name(), false));
+        }
+    }
+
     @Override
     protected void onStart() {
         Logger.d("onStart called");
         // Bind to the scheduler service for only once during the lifetime of the activity
         bindToService();
         super.onStart();
+        initPermMap();
         requestPermissions();
         NetworkSummaryExec.startCollector();
     }
@@ -409,6 +459,15 @@ public class SpeedometerApp extends AppCompatActivity implements TabLayout.OnTab
             unbindService(serviceConn);
             isBound = false;
         }
+        // Save permissions enum map to shared prefs
+        SharedPreferences sharedPref = getPreferences(Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = sharedPref.edit();
+        for(Config.PERMISSION_IDS permission_id: Config.PERMISSION_IDS.values()) {
+            /* Assume false when starting*/
+            PERMISSION_SETTINGS.put(permission_id, false);
+            editor.putBoolean(permission_id.name(), PERMISSION_SETTINGS.get(permission_id));
+        }
+        editor.commit();
     }
 
     @Override
@@ -593,5 +652,16 @@ public class SpeedometerApp extends AppCompatActivity implements TabLayout.OnTab
         Intent intent = AccountManager.newChooseAccountIntent(null, null, new String[]{"com.google", "com.google.android.legacyimap"}, null, null, null, null);
         startActivityForResult(intent, REQUEST_ACCOUNTS);
         consentDialogWrapper();
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode,
+                                           String[] permissions, int[] grantResults) {
+        Logger.i("onRequestPermissionsResult called");
+        for (int i = 0, permissionsLength = permissions.length; i < permissionsLength; i++) {
+            String s = permissions[i];
+            s=s.substring(s.lastIndexOf('.') + 1);
+            PERMISSION_SETTINGS.put(Config.PERMISSION_IDS.valueOf(s),grantResults[i] == PackageManager.PERMISSION_GRANTED);
+        }
     }
 }

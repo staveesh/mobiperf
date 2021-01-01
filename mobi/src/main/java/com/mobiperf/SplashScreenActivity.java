@@ -15,7 +15,6 @@
 
 package com.mobiperf;
 
-import android.app.Activity;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageInfo;
@@ -28,7 +27,7 @@ import android.widget.TextView;
 /**
  * The splash screen for Speedometer
  */
-public class SplashScreenActivity extends Activity {
+public class SplashScreenActivity extends AppCompatActivity {
   @Override
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);

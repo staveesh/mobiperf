@@ -2,22 +2,17 @@ package com.mobiperf;
 
 import android.Manifest;
 import android.annotation.TargetApi;
-import android.app.AppOpsManager;
 import android.app.usage.NetworkStatsManager;
 import android.content.Context;
-import android.content.Intent;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.os.Build;
-import android.provider.Settings;
-import android.support.v4.app.ActivityCompat;
 
 import com.mobiperf.util.Util;
 import com.mobiperf.util.model.Package;
 import com.mobiperf.util.utils.NetworkStatsHelper;
 import com.mobiperf.util.utils.PackageManagerHelper;
-import com.mobiperf.util.utils.TrafficStatsHelper;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -25,7 +20,6 @@ import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.Date;
 import java.util.List;
 
 public class NetworkSummaryCollector implements Runnable {

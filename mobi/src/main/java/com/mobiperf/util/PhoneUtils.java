@@ -14,11 +14,13 @@
  */
 package com.mobiperf.util;
 
+import android.Manifest;
 import android.annotation.SuppressLint;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.Bitmap.Config;
 import android.graphics.Canvas;
@@ -47,11 +49,12 @@ import android.view.Display;
 import android.view.WindowManager;
 import android.webkit.WebView;
 
+
 import com.mobiperf.DeviceInfo;
 import com.mobiperf.DeviceProperty;
 import com.mobiperf.Logger;
-import com.mobiperf.MeasurementCreationFragment;
 import com.mobiperf.R;
+import com.mobiperf.SpeedometerApp;
 
 import java.io.IOException;
 import java.net.ConnectException;
@@ -142,11 +145,12 @@ public class PhoneUtils {
   private int portNum = 6003;
   private int tcpTimeout = 3000;
 
+  @SuppressLint("MissingPermission")
   protected PhoneUtils(Context context) {
     this.context = context;
     powerBroadcastReceiver = new PowerStateChangeReceiver();
     // Registers a receiver for battery change events.
-    if(globalContext!=null) {
+    if (globalContext != null) {
       Intent powerIntent = globalContext.registerReceiver(powerBroadcastReceiver,
               new IntentFilter(Intent.ACTION_BATTERY_CHANGED));
       if (powerIntent != null) {
@@ -359,7 +363,7 @@ public class PhoneUtils {
   public String getCellInfo(boolean cidOnly) {
     initNetwork();
     List<NeighboringCellInfo> infos = null;
-    if (MeasurementCreationFragment.PERMISSION_SETTINGS.get(com.mobiperf.Config.PERMISSION_IDS.ACCESS_COARSE_LOCATION))
+    if (SpeedometerApp.PERMISSION_SETTINGS.get(com.mobiperf.Config.PERMISSION_IDS.ACCESS_COARSE_LOCATION))
       infos = telephonyManager.getNeighboringCellInfo();
 
     StringBuffer buf = new StringBuffer();
@@ -389,18 +393,12 @@ public class PhoneUtils {
       LocationManager manager =
               (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
 
-      Criteria criteriaCoarse = new Criteria();
-      /* "Coarse" accuracy means "no need to use GPS".
-       * Typically a gShots phone would be located in a building,
-       * and GPS may not be able to acquire a location.
-       * We only care about the location to determine the country,
-       * so we don't need a super accurate location, cell/wifi is good enough.
-       */
-      criteriaCoarse.setAccuracy(Criteria.ACCURACY_COARSE);
-      criteriaCoarse.setPowerRequirement(Criteria.POWER_LOW);
+      Criteria criteriaFine = new Criteria();
+      criteriaFine.setAccuracy(Criteria.ACCURACY_FINE);
+      criteriaFine.setPowerRequirement(Criteria.POWER_LOW);
       String providerName =
-              manager.getBestProvider(criteriaCoarse, /*enabledOnly=*/true);
-
+              manager.getBestProvider(criteriaFine, /*enabledOnly=*/true);
+      Logger.i("Using best location provider : "+providerName);
       List<String> providers = manager.getAllProviders();
       for (String providerNameIter : providers) {
         try {
@@ -419,10 +417,12 @@ public class PhoneUtils {
        * device powercycle may not update it.
        * {@see android.location.LocationManager.getLastKnownLocation}.
        */
-      if (MeasurementCreationFragment.PERMISSION_SETTINGS.get(com.mobiperf.Config.PERMISSION_IDS.ACCESS_COARSE_LOCATION)) {
+
+      if (SpeedometerApp.PERMISSION_SETTINGS.get(com.mobiperf.Config.PERMISSION_IDS.ACCESS_COARSE_LOCATION) ||
+              SpeedometerApp.PERMISSION_SETTINGS.get(com.mobiperf.Config.PERMISSION_IDS.ACCESS_FINE_LOCATION)) {
         manager.requestLocationUpdates(providerName,
-                /*minTime=*/0,
-                /*minDistance=*/0,
+                /*minTime=*/60000,
+                /*minDistance=*/1,
                 new LoggingLocationListener(),
                 Looper.getMainLooper());
         locationManager = manager;
@@ -443,7 +443,9 @@ public class PhoneUtils {
     try {
       initLocation();//we asked for the permissions from here
       Location location = null;
-      if (MeasurementCreationFragment.PERMISSION_SETTINGS.get(com.mobiperf.Config.PERMISSION_IDS.ACCESS_COARSE_LOCATION)) {
+
+      if (SpeedometerApp.PERMISSION_SETTINGS.get(com.mobiperf.Config.PERMISSION_IDS.ACCESS_COARSE_LOCATION)||
+              SpeedometerApp.PERMISSION_SETTINGS.get(com.mobiperf.Config.PERMISSION_IDS.ACCESS_FINE_LOCATION)) {
           location = locationManager.getLastKnownLocation(locationProviderName);
           Logger.i("Got the location object");
       }
@@ -705,7 +707,7 @@ public class PhoneUtils {
   @SuppressLint("MissingPermission")
   private String getDeviceId() {
     String deviceId = null;
-    if(MeasurementCreationFragment.PERMISSION_SETTINGS.get(com.mobiperf.Config.PERMISSION_IDS.READ_PHONE_STATE))
+    if(SpeedometerApp.PERMISSION_SETTINGS.get(com.mobiperf.Config.PERMISSION_IDS.READ_PHONE_STATE))
       deviceId= telephonyManager.getDeviceId();  // This ID is permanent to a physical phone.
     // "generic" means the emulator.
     if (deviceId == null || Build.DEVICE.equals("generic")) {
@@ -880,7 +882,6 @@ public class PhoneUtils {
     } else {
       location = getLocation();
     }
-    
     NetworkInfo activeNetwork = connectivityManager.getActiveNetworkInfo();
     String networkType = PhoneUtils.getPhoneUtils().getNetwork();
     String ipConnectivity = getIpConnectivity();
@@ -899,5 +900,5 @@ public class PhoneUtils {
         location.getProvider(), networkType, carrierName, 
         utils.getCurrentBatteryLevel(), utils.isCharging(), 
         utils.getCellInfo(false), utils.getCurrentRssi());
-  }  
+  }
 }
