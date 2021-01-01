@@ -32,7 +32,6 @@ import android.widget.ProgressBar;
 import android.widget.ToggleButton;
 
 import java.util.List;
-import java.util.Objects;
 
 /**
  * The activity that provides a console and progress bar of the ongoing measurement

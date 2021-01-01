@@ -248,6 +248,7 @@ public class MeasurementScheduler extends Service {
     this.registerReceiver(broadcastReceiver, filter);
     // TODO(mdw): Make this a user-selectable option
     createNotificationChannel(); //register the notification channel
+    startSpeedometerInForeGround();
     addIconToStatusBar();
   }
 

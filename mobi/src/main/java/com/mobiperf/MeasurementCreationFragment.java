@@ -13,15 +13,10 @@
  */
 package com.mobiperf;
 
-import android.Manifest;
 import android.content.Context;
 import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.os.Bundle;
-import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
-import android.support.v4.content.ContextCompat;
-import android.support.v7.app.AppCompatActivity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -53,11 +48,8 @@ import com.mobiperf.measurements.UDPBurstTask.UDPBurstDesc;
 import com.mobiperf.util.MLabNS;
 
 import java.security.InvalidParameterException;
-import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.EnumMap;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import static com.mobiperf.R.id;
@@ -71,14 +63,7 @@ public class MeasurementCreationFragment extends Fragment {
 
   private static final int NUMBER_OF_COMMON_VIEWS = 1;
   public static final String TAB_TAG = "MEASUREMENT_CREATION";
-  /**
-   * This stores the status on the permissions that we are going to be using.
-   */
-  public static EnumMap<Config.PERMISSION_IDS, Boolean> PERMISSION_SETTINGS;
 
-  /**
-   * This is a bad idea as it causes memory leaks. But then it is very much needed for now. To fix this we first need to fix the issue to deal with permissions.
-   */
   private SpeedometerApp parent;
   private String measurementTypeUnderEdit;
   private ArrayAdapter<String> spinnerValues;
@@ -135,7 +120,6 @@ public class MeasurementCreationFragment extends Fragment {
     radioTCPUp.setChecked(true);
     radioTCPUp.setOnClickListener(new TCPRadioOnClickListener());
     radioTCPDown.setOnClickListener(new TCPRadioOnClickListener());
-    initPermMap();
     return v;
   }
 
@@ -239,7 +223,6 @@ public class MeasurementCreationFragment extends Fragment {
   private class ButtonOnClickListener implements OnClickListener {
     @Override
     public void onClick(View v) {
-      checkAndRequestPerms();
       MeasurementTask newTask = null;
       boolean showLengthWarning = false;
       try {
@@ -446,43 +429,4 @@ public class MeasurementCreationFragment extends Fragment {
     }
   }
 
-
-
-  private static void initPermMap(){
-    PERMISSION_SETTINGS = new EnumMap<>(Config.PERMISSION_IDS.class);
-    for(Config.PERMISSION_IDS permission_id: Config.PERMISSION_IDS.values()) {
-      /* Assume false when starting*/
-      PERMISSION_SETTINGS.put(permission_id, false);
-    }
-  }
-
-  public void checkAndRequestPerms(){
-    List<String> list = new ArrayList<>();
-    if (ContextCompat.checkSelfPermission(v.getContext(),
-            Manifest.permission.READ_PHONE_STATE)
-            != PackageManager.PERMISSION_GRANTED)
-      list.add(Manifest.permission.READ_PHONE_STATE);
-    if (ContextCompat.checkSelfPermission(v.getContext(),
-            Manifest.permission.ACCESS_COARSE_LOCATION)
-            != PackageManager.PERMISSION_GRANTED)
-      list.add(Manifest.permission.ACCESS_COARSE_LOCATION);
-    if(list.size()>0){
-      String [] temp = new String[list.size()];
-      for (int i = 0; i < list.size(); i++) {
-        temp[i]= list.get(i);
-      }
-      Logger.i("Requesting permissions from the device");
-      ActivityCompat.requestPermissions(SpeedometerApp.getCurrentApp(),temp,0);
-    }
-  }
-
-  @Override
-  public void onRequestPermissionsResult(int requestCode,
-                                         String[] permissions, int[] grantResults) {
-    for (int i = 0, permissionsLength = permissions.length; i < permissionsLength; i++) {
-      String s = permissions[i];
-      s=s.substring(s.lastIndexOf('.'));
-      PERMISSION_SETTINGS.put(Config.PERMISSION_IDS.valueOf(s),grantResults[i] == PackageManager.PERMISSION_GRANTED);
-    }
-  }
 }

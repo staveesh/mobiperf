@@ -205,7 +205,7 @@ public class MeasurementResult {
                 ipAddress = "Unknown";
             }
             printer.println("\nAddress: " + ipAddress);
-            int time = Integer.parseInt(values.get("time_ms"));
+            int time = Integer.parseInt(values.get("timeMs"));
             printer.println("Lookup time: " + time + " ms");
         } else {
             printer.println("Failed");
