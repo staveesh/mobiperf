@@ -60,13 +60,21 @@ public class DeviceProperty {
     this.rssi = rssi;
   }
   
-  private class GeoLocation {
+  public static class GeoLocation {
     private double longitude;
     private double latitude;
     
     public GeoLocation(double longtitude, double latitude) {
       this.longitude = longtitude;
       this.latitude = latitude;
+    }
+
+    public double getLongitude() {
+      return longitude;
+    }
+
+    public double getLatitude() {
+      return latitude;
     }
   }
 }

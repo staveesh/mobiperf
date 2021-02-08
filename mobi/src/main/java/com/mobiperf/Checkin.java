@@ -357,6 +357,7 @@ public class Checkin {
     private String serviceRequest(String request, String jsonString)
             throws IOException {
         Logger.d("ServiceRequest() Called");
+        Logger.d("Request : " + request);
         Socket serverSocket = new Socket(Util.resolveServer(), Config.SERVER_PORT);
         Logger.d("Server Socket Connection Established");
         PrintWriter out = new PrintWriter(serverSocket.getOutputStream());
@@ -378,84 +379,96 @@ public class Checkin {
         serverSocket.close();
         return result;
     }
-        public JSONObject generateCheckInJson () {
-            JSONObject request = null;
-            try {
-                request = new JSONObject();
-                request.put("requestType", CHECK_IN_TAG);
-                return request;
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
+
+    public synchronized JSONObject generateCheckInJson() {
+        Logger.d("Generating JSON payload...");
+        JSONObject request = null;
+        try {
+            request = new JSONObject();
+            request.put("requestType", CHECK_IN_TAG);
+            request.put("accessPointInfo",
+                    phoneUtils.getAccessPointInfo());
+            DeviceProperty dProp = phoneUtils.getDeviceProperty();
+            request.put("deviceId", dProp.deviceId);
+            request.put("timestamp", dProp.timestamp);
+            request.put("latitude", dProp.location.getLatitude());
+            request.put("longitude", dProp.location.getLongitude());
+            request.put("locationType", dProp.locationType);
+            request.put("networkType", dProp.networkType);
+            request.put("battery", dProp.batteryLevel);
             return request;
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        return request;
+    }
+
+    /**
+     * Initiates the process to get the authentication cookie for the user account. Returns
+     * immediately.
+     */
+    public synchronized void getCookie() {
+        if (phoneUtils.isTestingServer(phoneUtils.getServerUrl())) {
+            Logger.i("Setting fakeAuthCookie");
+            authCookie = getFakeAuthCookie();
+            return;
+        }
+        if (this.accountSelector == null) {
+            accountSelector = new AccountSelector(context);
         }
 
-        /**
-         * Initiates the process to get the authentication cookie for the user account. Returns
-         * immediately.
-         */
-        public synchronized void getCookie () {
-            if (phoneUtils.isTestingServer(phoneUtils.getServerUrl())) {
-                Logger.i("Setting fakeAuthCookie");
-                authCookie = getFakeAuthCookie();
-                return;
+        try {
+            // Authenticates if there are no ongoing ones
+            if (accountSelector.getCheckinFuture() == null) {
+                accountSelector.authenticate();
             }
-            if (this.accountSelector == null) {
-                accountSelector = new AccountSelector(context);
-            }
-
-            try {
-                // Authenticates if there are no ongoing ones
-                if (accountSelector.getCheckinFuture() == null) {
-                    accountSelector.authenticate();
-                }
-            } catch (OperationCanceledException e) {
-                Logger.e("Unable to get auth cookie", e);
-            } catch (AuthenticatorException e) {
-                Logger.e("Unable to get auth cookie", e);
-            } catch (IOException e) {
-                Logger.e("Unable to get auth cookie", e);
-            }
-        }
-
-        /**
-         * Resets the checkin variables in AccountSelector
-         * */
-        public void initializeAccountSelector () {
-            accountSelector.resetCheckinFuture();
-            accountSelector.setAuthImmediately(false);
-        }
-
-        private synchronized boolean checkGetCookie () {
-            if (phoneUtils.isTestingServer(phoneUtils.getServerUrl())) {
-                authCookie = getFakeAuthCookie();
-                return true;
-            }
-            Future<Cookie> getCookieFuture = accountSelector.getCheckinFuture();
-            if (getCookieFuture == null) {
-                Logger.i("checkGetCookie called too early");
-                return false;
-            }
-            if (getCookieFuture.isDone()) {
-                try {
-                    authCookie = getCookieFuture.get();
-                    Logger.i("Got authCookie: " + authCookie);
-                    return true;
-                } catch (InterruptedException e) {
-                    Logger.e("Unable to get auth cookie", e);
-                    return false;
-                } catch (ExecutionException e) {
-                    Logger.e("Unable to get auth cookie", e);
-                    return false;
-                }
-            } else {
-                Logger.i("getCookieFuture is not yet finished");
-                return false;
-            }
-        }
-
-        private void sendStringMsg (String str){
-            UpdateIntent intent = new UpdateIntent(str, UpdateIntent.MSG_ACTION);
-            context.sendBroadcast(intent);
+        } catch (OperationCanceledException e) {
+            Logger.e("Unable to get auth cookie", e);
+        } catch (AuthenticatorException e) {
+            Logger.e("Unable to get auth cookie", e);
+        } catch (IOException e) {
+            Logger.e("Unable to get auth cookie", e);
         }
     }
+
+    /**
+     * Resets the checkin variables in AccountSelector
+     */
+    public void initializeAccountSelector() {
+        accountSelector.resetCheckinFuture();
+        accountSelector.setAuthImmediately(false);
+    }
+
+    private synchronized boolean checkGetCookie() {
+        if (phoneUtils.isTestingServer(phoneUtils.getServerUrl())) {
+            authCookie = getFakeAuthCookie();
+            return true;
+        }
+        Future<Cookie> getCookieFuture = accountSelector.getCheckinFuture();
+        if (getCookieFuture == null) {
+            Logger.i("checkGetCookie called too early");
+            return false;
+        }
+        if (getCookieFuture.isDone()) {
+            try {
+                authCookie = getCookieFuture.get();
+                Logger.i("Got authCookie: " + authCookie);
+                return true;
+            } catch (InterruptedException e) {
+                Logger.e("Unable to get auth cookie", e);
+                return false;
+            } catch (ExecutionException e) {
+                Logger.e("Unable to get auth cookie", e);
+                return false;
+            }
+        } else {
+            Logger.i("getCookieFuture is not yet finished");
+            return false;
+        }
+    }
+
+    private void sendStringMsg(String str) {
+        UpdateIntent intent = new UpdateIntent(str, UpdateIntent.MSG_ACTION);
+        context.sendBroadcast(intent);
+    }
+}

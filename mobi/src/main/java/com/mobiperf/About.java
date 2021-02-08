@@ -25,16 +25,16 @@ import android.widget.TextView;
  * Display a simple description of this application
  */
 public class About extends AppCompatActivity {
-  public void onCreate(Bundle savedInstanceState) {
-    super.onCreate(savedInstanceState);
-    setContentView(R.layout.about);
-    TextView version = (TextView)findViewById(R.id.about_version);
-    
-    try {
-      PackageInfo pInfo = getPackageManager().getPackageInfo(getPackageName(), 0);
-      version.setText("Version: "+pInfo.versionName);
-    } catch (NameNotFoundException e) {
-      e.printStackTrace();
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.about);
+        TextView version = (TextView)findViewById(R.id.about_version);
+
+        try {
+            PackageInfo pInfo = getPackageManager().getPackageInfo(getPackageName(), 0);
+            version.setText("Version: "+pInfo.versionName);
+        } catch (NameNotFoundException e) {
+            e.printStackTrace();
+        }
     }
-  }
 }

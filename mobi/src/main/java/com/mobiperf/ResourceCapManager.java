@@ -304,14 +304,6 @@ public class ResourceCapManager {
     return false;
   }
 
-  /**
-   * Determine how much data was consumed by a task and update the 
-   * data usage accordingly.
-   * 
-   * @param result Structure holding the measurement result from which we can extract data usage.
-   * @param taskType The type of measurement task completed
-   * @throws IOException
-   */
   public void updateDataUsage(long taskDataUsed)
       throws IOException {
 
@@ -345,8 +337,8 @@ public class ResourceCapManager {
    * Returns whether a measurement can be run.
    */
   public synchronized boolean canScheduleExperiment() {
-    return (PhoneUtils.getPhoneUtils().isCharging() || 
-        PhoneUtils.getPhoneUtils().getCurrentBatteryLevel() > minBatteryThreshold);
+    return (PhoneUtils.getPhoneUtils().isCharging() ||
+            PhoneUtils.getPhoneUtils().getCurrentBatteryLevel() > minBatteryThreshold);
   }
 
   /**

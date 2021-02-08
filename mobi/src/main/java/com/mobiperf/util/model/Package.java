@@ -1,4 +1,4 @@
-package  com.mobiperf.util.model;
+package com.mobiperf.util.model;
 
 /**
  * Created by Robert Zagórski on 2016-12-14.

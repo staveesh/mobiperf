@@ -1,4 +1,4 @@
-package  com.mobiperf.util.utils;
+package com.mobiperf.util.utils;
 
 import android.content.Context;
 import android.content.pm.PackageInfo;

@@ -1,4 +1,4 @@
-package  com.mobiperf.util.utils;
+package com.mobiperf.util.utils;
 
 import android.net.TrafficStats;
 
