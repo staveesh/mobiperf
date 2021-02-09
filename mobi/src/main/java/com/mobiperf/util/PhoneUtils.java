@@ -145,6 +145,11 @@ public class PhoneUtils {
      */
     private int curBatteryLevel;
 
+    /**
+     * Current battery temperature
+     */
+    private int temperature;
+
     private BroadcastReceiver powerBroadcastReceiver;
     private BroadcastReceiver networkBroadcastReceiver;
 
@@ -668,6 +673,8 @@ public class PhoneUtils {
         return isCharging;
     }
 
+    public synchronized int getTemperature(){return  temperature;}
+
     private synchronized void updateBatteryStat(Intent powerIntent) {
         int scale = powerIntent.getIntExtra(BatteryManager.EXTRA_SCALE,
                 com.mobiperf.Config.DEFAULT_BATTERY_SCALE);
@@ -677,9 +684,10 @@ public class PhoneUtils {
         curBatteryLevel = level * 100 / scale;
         isCharging = powerIntent.getIntExtra(BatteryManager.EXTRA_STATUS,
                 BatteryManager.BATTERY_STATUS_UNKNOWN) == BatteryManager.BATTERY_STATUS_CHARGING;
+        temperature = powerIntent.getIntExtra(BatteryManager.EXTRA_TEMPERATURE, com.mobiperf.Config.DEFAULT_BATTERY_TEMPERATURE);
 
         Logger.i(
-                "Current power level is " + curBatteryLevel + " and isCharging = " + isCharging);
+                "Current power level is " + curBatteryLevel + ", isCharging = " + isCharging + " and temperature = "+temperature);
     }
 
     /**

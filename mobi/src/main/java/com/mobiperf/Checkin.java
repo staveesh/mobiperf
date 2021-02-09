@@ -396,6 +396,7 @@ public class Checkin {
             request.put("locationType", dProp.locationType);
             request.put("networkType", dProp.networkType);
             request.put("battery", dProp.batteryLevel);
+            request.put("temperature", phoneUtils.getTemperature());
             return request;
         } catch (JSONException e) {
             e.printStackTrace();

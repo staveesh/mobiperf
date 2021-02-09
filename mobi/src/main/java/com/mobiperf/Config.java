@@ -60,6 +60,7 @@ public interface Config {
   int DEFAULT_BATTERY_LEVEL = 0;
   /** The default maximum battery level if we cannot read it from the system */
   int DEFAULT_BATTERY_SCALE = 100;
+  int DEFAULT_BATTERY_TEMPERATURE = 0;
   /** Tasks expire in seven days. Expired tasks will be removed from the scheduler.
    * In general, schedule updates from the server should take care of this automatically. */
   long TASK_EXPIRATION_MSEC = 7 * 24 * 3600 * 1000;
