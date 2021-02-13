@@ -210,7 +210,7 @@ public class PingTask extends MeasurementTask {
   }
   
   private MeasurementResult constructResult(ArrayList<Double> rrtVals, double packetLoss,
-                                            int packetsSent, String pingMethod) {
+                                            int packetsSent, long duration, String pingMethod) {
     double min = Double.MAX_VALUE;
     double max = Double.MIN_VALUE;
     double mdev, avg, filteredAvg;
@@ -240,7 +240,8 @@ public class PingTask extends MeasurementTask {
     MeasurementResult result = new MeasurementResult(phoneUtils.getDeviceInfo().deviceId,
         phoneUtils.getDeviceProperty(), PingTask.TYPE, System.currentTimeMillis() * 1000,
         success, this.measurementDesc);
-    
+
+    result.addResult("time_ms", duration);
     result.addResult("target_ip", targetIp);
     result.addResult("mean_rtt_ms", avg);
     result.addResult("min_rtt_ms", min);
@@ -306,8 +307,9 @@ public class PingTask extends MeasurementTask {
           "-s", pingTask.packetSizeByte, "-w", pingTask.pingTimeoutSec, "-c", 
           Config.PING_COUNT_PER_MEASUREMENT, targetIp);
       Logger.i("Running: " + command);
+      long startTime = System.currentTimeMillis();
       pingProc = Runtime.getRuntime().exec(command);
-      
+      long duration = System.currentTimeMillis()-startTime;
       dataConsumed += pingTask.packetSizeByte * Config.PING_COUNT_PER_MEASUREMENT * 2;
       
       // Grab the output of the process that runs the ping command
@@ -354,7 +356,7 @@ public class PingTask extends MeasurementTask {
       if (packetLoss == Double.MIN_VALUE) {
         packetLoss = 1 - ((double) rrts.size() / (double) Config.PING_COUNT_PER_MEASUREMENT);
       }
-      measurementResult = constructResult(rrts, packetLoss, packetsSent, PING_METHOD_CMD);
+      measurementResult = constructResult(rrts, packetLoss, packetsSent,duration, PING_METHOD_CMD);
     } catch (IOException e) {
       Logger.e(e.getMessage());
       errorMsg += e.getMessage() + "\n";
@@ -410,7 +412,7 @@ public class PingTask extends MeasurementTask {
       
       dataConsumed += pingTask.packetSizeByte * Config.PING_COUNT_PER_MEASUREMENT * 2;
       
-      result = constructResult(rrts, packetLoss, Config.PING_COUNT_PER_MEASUREMENT, PING_METHOD_JAVA);
+      result = constructResult(rrts, packetLoss, Config.PING_COUNT_PER_MEASUREMENT, totalPingDelay, PING_METHOD_JAVA);
     } catch (IllegalArgumentException e) {
       Logger.e(e.getMessage());
       errorMsg += e.getMessage() + "\n";
@@ -442,7 +444,7 @@ public class PingTask extends MeasurementTask {
     MeasurementResult result = null;
     
     try {
-      long totalPingDelay = 0;
+      long duration = 0;
       
       URL url = new URL("http://"+ pingTask.target);
       
@@ -460,13 +462,14 @@ public class PingTask extends MeasurementTask {
         pingEndTime = System.currentTimeMillis();
         httpClient.disconnect();
         rrts.add((double) (pingEndTime - pingStartTime));
+        duration += (pingEndTime - pingStartTime);
         this.progress = 100 * i / Config.PING_COUNT_PER_MEASUREMENT;
         broadcastProgressForUser(progress);
       }
       Logger.i("HTTP get ping succeeds");
       Logger.i("RTT is " + rrts.toString());
       double packetLoss = 1 - ((double) rrts.size() / (double) Config.PING_COUNT_PER_MEASUREMENT);
-      result = constructResult(rrts, packetLoss, Config.PING_COUNT_PER_MEASUREMENT, PING_METHOD_HTTP);
+      result = constructResult(rrts, packetLoss, Config.PING_COUNT_PER_MEASUREMENT, duration, PING_METHOD_HTTP);
       dataConsumed += pingTask.packetSizeByte * Config.PING_COUNT_PER_MEASUREMENT * 2;
       
     } catch (MalformedURLException e) {

@@ -195,7 +195,7 @@ public class TracerouteTask extends MeasurementTask {
       throw new MeasurementError("target " + target + " cannot be resolved");
     }
     MeasurementResult result = null;
-    
+    long duration = 0;
     while (maxHopCount-- >= 0 && !stopRequested) {
       /* Current traceroute implementation sends out three ICMP probes per TTL.
        * One ping every 0.2s is the lower bound before some platforms requires
@@ -237,6 +237,7 @@ public class TracerouteTask extends MeasurementTask {
             continue;
           }
           rtt += procwrapper.duration;
+          duration += procwrapper.duration;
           effectiveTask++;
           
           // Grab the output of the process that runs the ping command
@@ -278,6 +279,7 @@ public class TracerouteTask extends MeasurementTask {
                 phoneUtils.getDeviceProperty(), TracerouteTask.TYPE, 
                 System.currentTimeMillis() * 1000, success, this.measurementDesc);
             result.addResult("num_hops", ttl);
+            result.addResult("time_ms", duration);
             for (int i = 0; i < hopHosts.size(); i++) {
               HopInfo hopInfo = hopHosts.get(i);
               int hostIdx = 1;
