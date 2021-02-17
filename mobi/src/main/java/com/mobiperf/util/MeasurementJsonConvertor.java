@@ -16,6 +16,7 @@
 package com.mobiperf.util;
 
 import android.content.Context;
+import android.util.Log;
 
 import com.google.gson.FieldNamingPolicy;
 import com.google.gson.Gson;
@@ -64,7 +65,7 @@ public class MeasurementJsonConvertor {
             new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
 
     static {
-        dateFormat.setTimeZone(TimeZone.getTimeZone("GMT"));
+        dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
     }
 
     public static MeasurementTask makeMeasurementTaskFromJson(JSONObject json, Context context)
@@ -140,7 +141,12 @@ public class MeasurementJsonConvertor {
     }
 
     private static Date parseDate(String dateString) throws ParseException {
-        return dateFormat.parse(dateString);
+        Date parsedDate = dateFormat.parse(dateString);
+        if(parsedDate == null)
+            Log.i("Mobiperf", "Parsed date is null");
+        else
+            Log.i("MobiPerf", parsedDate.toString());
+        return parsedDate;
     }
 
     private static String formatDate(Date date) {
