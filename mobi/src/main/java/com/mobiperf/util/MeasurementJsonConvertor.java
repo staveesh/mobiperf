@@ -65,7 +65,7 @@ public class MeasurementJsonConvertor {
             new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
 
     static {
-        dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
+        dateFormat.setTimeZone(TimeZone.getTimeZone("GMT"));
     }
 
     public static MeasurementTask makeMeasurementTaskFromJson(JSONObject json, Context context)

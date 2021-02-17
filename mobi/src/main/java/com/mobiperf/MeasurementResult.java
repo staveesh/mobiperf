@@ -81,7 +81,7 @@ public class MeasurementResult {
 
     private boolean hasExperimentTag(Map<String,String> map){
         boolean experiment=false;
-        if(map.containsKey("Experiment")){
+        if(map.containsKey("isExperiment")){
             experiment=true;
         }
         return experiment;
