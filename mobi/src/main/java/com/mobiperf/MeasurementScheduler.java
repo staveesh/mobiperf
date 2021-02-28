@@ -329,10 +329,6 @@ public class MeasurementScheduler extends Service {
    * Perform a checkin operation.
    */
   public void handleCheckin(boolean force) {
-    if (!userConsented()) {
-      Logger.i("Skipping checkin - User has not consented");
-      return;
-    }
 
     // New addition: check if the RRC task has paused other tasks.
     if ((!force && isPauseRequested()) || RRCTrafficControl.checkIfPaused()) {
@@ -356,11 +352,6 @@ public class MeasurementScheduler extends Service {
   }
 
   private void handleMeasurement() {
-    if (!userConsented()) {
-      Logger.i("Skipping measurement - User has not consented");
-      return;
-    }
-
     try {
       MeasurementTask task = taskQueue.peek();
       // Process the head of the queue.
@@ -735,7 +726,6 @@ public class MeasurementScheduler extends Service {
     // reset counters for checkin
     checkinRetryCnt = 0;
     checkinRetryIntervalSec = Config.MIN_CHECKIN_RETRY_INTERVAL_SEC;
-    checkin.initializeAccountSelector();
   }
 
   private void getTasksFromServer() throws IOException {
@@ -745,7 +735,6 @@ public class MeasurementScheduler extends Service {
     if (RRCTrafficControl.checkIfPaused()) {
       return;
     }
-    checkin.getCookie();
     List<MeasurementTask> tasksFromServer = checkin.checkin(resourceCapManager);
 
     updateSchedule(tasksFromServer, false);
@@ -1337,14 +1326,6 @@ public class MeasurementScheduler extends Service {
     completedMeasurementCnt =
         prefs.getInt(Config.PREF_KEY_COMPLETED_MEASUREMENTS, 0);
     failedMeasurementCnt = prefs.getInt(Config.PREF_KEY_FAILED_MEASUREMENTS, 0);
-  }
-
-  private boolean userConsented() {
-    SharedPreferences prefs =
-        PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
-    boolean consented = prefs.getBoolean(Config.PREF_KEY_CONSENTED, false);
-    Logger.i("userConsented returning " + consented);
-    return consented;
   }
 
   /**

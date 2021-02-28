@@ -67,5 +67,6 @@
     <string name="radio_Up">Up</string>
     <string name="Expand_Advanced_Settings">Expand Advanced Settings</string>
     <string name="Collapse_Advanced_Settings">Collapse Advanced Settings</string>
+    <string name="enable_measurements">PREF_KEY_MEASUREMENTS_ENABLED</string>
 
 </resources>

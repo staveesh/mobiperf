@@ -60,14 +60,11 @@ import java.util.EnumMap;
 public class SpeedometerApp extends AppCompatActivity implements TabLayout.OnTabSelectedListener {
 
     public static final String TAG = "MobiPerf";
-    private static final int REQUEST_ACCOUNTS = 23;
 
     public static final int PERMISSIONS_REQUEST_CODE = 6789;
     public static EnumMap<Config.PERMISSION_IDS, Boolean> PERMISSION_SETTINGS;
 
-    private boolean userConsented = false;
     private String userUniversity = null;
-    private String selectedAccount = null;
 
     private MeasurementScheduler scheduler;
     private TabHost tabHost;
@@ -209,13 +206,6 @@ public class SpeedometerApp extends AppCompatActivity implements TabLayout.OnTab
         super.onCreate(savedInstanceState);
         speedometerApp = this;
         setContentView(R.layout.main);
-        restoreDefaultAccount();
-        if (selectedAccount == null) {
-            setUser();
-        } else {
-            // double check the user consent selection
-            consentDialogWrapper();
-        }
         if(userUniversity == null){
             universityDialogWrapper();
         }
@@ -490,9 +480,6 @@ public class SpeedometerApp extends AppCompatActivity implements TabLayout.OnTab
             Logger.d("requesting Scheduler stop");
             scheduler.requestStop();
         }
-        // Force consent on next restart.
-        userConsented = false;
-        saveConsentState();
         // Disable auto start on boot.
         setStartOnBoot(false);
 
@@ -517,77 +504,16 @@ public class SpeedometerApp extends AppCompatActivity implements TabLayout.OnTab
         editor.commit();
     }
 
-    private void recordUserConsent() {
-        userConsented = true;
-        saveConsentState();
-    }
-
-    /**
-     * Save consent state persistent storage.
-     */
-    private void saveConsentState() {
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(
-                getApplicationContext());
-        SharedPreferences.Editor editor = prefs.edit();
-        editor.putBoolean(Config.PREF_KEY_CONSENTED, userConsented);
-        editor.apply();
-    }
-
-    /**
-     * Restore the last used account
-     */
-    private void restoreDefaultAccount() {
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getBaseContext());
-        selectedAccount = prefs.getString(Config.PREF_KEY_SELECTED_ACCOUNT, null);
-    }
-
-    /**
-     * Restore measurement statistics from persistent storage.
-     */
-    private void restoreConsentState() {
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(
-                getApplicationContext());
-        userConsented = prefs.getBoolean(Config.PREF_KEY_CONSENTED, false);
-    }
-
     private void restoreUserUniversity(){
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(
                 getApplicationContext());
         userUniversity = prefs.getString(Config.PREF_KEY_USER_UNIVERSITY, null);
     }
 
-    /**
-     * A wrapper function to check user consent selection,
-     * and generate one if user haven't agreed on.
-     */
-    private void consentDialogWrapper() {
-        restoreConsentState();
-        if (!userConsented) {
-            // Show the consent dialog. After user select the content
-            showDialog();
-        }
-    }
-
     private void universityDialogWrapper(){
         restoreUserUniversity();
         if(userUniversity == null){
             showUniversityDialog();
-        }
-    }
-
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if (requestCode == REQUEST_ACCOUNTS) {
-            // Receiving a result from the AccountPicker
-            if (resultCode == RESULT_OK) {
-                selectedAccount = data.getStringExtra(AccountManager.KEY_ACCOUNT_NAME);
-            } else {
-                selectedAccount = "Anonymous";
-            }
-            SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getBaseContext());
-            SharedPreferences.Editor editor = prefs.edit();
-            editor.putString(Config.PREF_KEY_SELECTED_ACCOUNT, selectedAccount);
-            editor.apply();
         }
     }
 
@@ -640,28 +566,9 @@ public class SpeedometerApp extends AppCompatActivity implements TabLayout.OnTab
         return speedometerApp;
     }
 
-    void showDialog() {
-        DialogFragment newFragment = ConsentAlertDialog.newInstance();
-        newFragment.show(getSupportFragmentManager(), "dialog");
-    }
-
     void showUniversityDialog(){
         DialogFragment selectUni = UniversityDialog.newInstance();
         selectUni.show(getSupportFragmentManager(), "university");
-    }
-
-    public void doPositiveClick() {
-        Log.i("FragmentAlertDialog", "Positive click!");
-        recordUserConsent();
-        // Enable auto start on boot.
-        setStartOnBoot(true);
-        // Force a checkin now since the one initiated by the scheduler was likely skipped.
-        doCheckin();
-    }
-
-    public void doNegativeClick() {
-        Log.i("FragmentAlertDialog", "Negative click!");
-        quitApp();
     }
 
     public void userCancelled(){
@@ -677,14 +584,8 @@ public class SpeedometerApp extends AppCompatActivity implements TabLayout.OnTab
     }
 
     String getSelectedAccount() {
+        String selectedAccount = "Anonymous";
         return selectedAccount;
-    }
-
-    @RequiresApi(api = Build.VERSION_CODES.M)
-    public void setUser() {
-        Intent intent = AccountManager.newChooseAccountIntent(null, null, new String[]{"com.google", "com.google.android.legacyimap"}, null, null, null, null);
-        startActivityForResult(intent, REQUEST_ACCOUNTS);
-        consentDialogWrapper();
     }
 
     @Override

@@ -4,11 +4,15 @@ import android.Manifest;
 import android.annotation.TargetApi;
 import android.app.usage.NetworkStatsManager;
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
+import android.net.ConnectivityManager;
 import android.os.Build;
+import android.support.v7.preference.PreferenceManager;
 
+import com.mobiperf.util.PhoneUtils;
 import com.mobiperf.util.Util;
 import com.mobiperf.util.model.Package;
 import com.mobiperf.util.utils.NetworkStatsHelper;
@@ -36,25 +40,40 @@ public class NetworkSummaryCollector implements Runnable {
         long endTime = System.currentTimeMillis();
         long startTime = endTime-(24*3600*1000); //minus 24 hrs
         List<Package> packageList=getPackagesData();
-        JSONArray userSummary = new JSONArray();
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
+        String university = prefs.getString(Config.PREF_KEY_USER_UNIVERSITY, null);
+        String deviceId = PhoneUtils.getPhoneUtils().getDeviceInfo().deviceId;
+        JSONArray wifiSummary = new JSONArray();
+        JSONArray mobileSummary = new JSONArray();
         try {
             for (Package pckg : packageList) {
                 String packageName = pckg.getPackageName();
-                DataPayload dataPayload = getBytes(packageName,startTime,endTime);
+                DataPayload wifiPayload = getBytes(packageName,startTime,endTime, ConnectivityManager.TYPE_WIFI);
+                DataPayload mobilePayload = getBytes(packageName,startTime,endTime, ConnectivityManager.TYPE_MOBILE);
                 //build json here
-                if(!dataPayload.isEmptyPayload()) {
+                if(!wifiPayload.isEmptyPayload()) {
                     JSONObject appData = new JSONObject();
                     appData.put("name", packageName);
-                    appData.put("Rx",dataPayload.getRx());
-                    appData.put("Tx",dataPayload.getTx());
-                    userSummary.put(appData);
+                    appData.put("Rx",wifiPayload.getRx());
+                    appData.put("Tx",wifiPayload.getTx());
+                    wifiSummary.put(appData);
+                }
+                if(!mobilePayload.isEmptyPayload()) {
+                    JSONObject appData = new JSONObject();
+                    appData.put("name", packageName);
+                    appData.put("Rx",mobilePayload.getRx());
+                    appData.put("Tx",mobilePayload.getTx());
+                    mobileSummary.put(appData);
                 }
             }
             JSONObject blob = new JSONObject();
             blob.put("requestType","summary");
+            blob.put("institution", university);
+            blob.put("deviceId", deviceId);
             blob.put("userName", SpeedometerApp.getCurrentApp().getSelectedAccount());
             blob.put("Date",endTime);
-            blob.put("userSummary",userSummary);
+            blob.put("wifiSummary",wifiSummary);
+            blob.put("mobileSummary",mobileSummary);
             Logger.d(blob.toString());
             Util.sendResult(blob.toString(),"Network Summary");
         }
@@ -99,20 +118,20 @@ public class NetworkSummaryCollector implements Runnable {
         return packageList;
     }
 
-    private DataPayload getBytes(String packageName,long start,long end) {
+    private DataPayload getBytes(String packageName,long start,long end, int type) {
         int uid = PackageManagerHelper.getPackageUid(context, packageName);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             NetworkStatsManager networkStatsManager = (NetworkStatsManager) context.getSystemService(Context.NETWORK_STATS_SERVICE);
             NetworkStatsHelper networkStatsHelper = new NetworkStatsHelper(networkStatsManager, uid);
-            return fillNetworkStatsPackage(networkStatsHelper,start,end);
+            return fillNetworkStatsPackage(networkStatsHelper,start,end, type);
         }
         return null;
     }
 
     @TargetApi(Build.VERSION_CODES.M)
-    private DataPayload fillNetworkStatsPackage(NetworkStatsHelper networkStatsHelper,long start,long end) {
-        long mobileWifiRx = networkStatsHelper.getPackageRxBytesWifi(start,end);
-        long mobileWifiTx = networkStatsHelper.getPackageTxBytesWifi(start,end);
+    private DataPayload fillNetworkStatsPackage(NetworkStatsHelper networkStatsHelper,long start,long end, int type) {
+        long mobileWifiRx = networkStatsHelper.getPackageRxBytesWifi(start,end, type);
+        long mobileWifiTx = networkStatsHelper.getPackageTxBytesWifi(start,end, type);
         return new DataPayload(mobileWifiRx,mobileWifiTx);
     }
 

@@ -2,6 +2,11 @@
 <PreferenceScreen
   xmlns:android="http://schemas.android.com/apk/res/android"
   android:title="Preferences">
+  <CheckBoxPreference
+      android:title="Enable Measurements"
+      android:defaultValue="false"
+      android:summary="Want the app to run experiments?"
+      android:key="@string/enable_measurements"/>
   <EditTextPreference
     android:defaultValue="1"
     android:summary="The interval (hours) speedometer fetches and pushes measurements"
@@ -15,10 +20,10 @@
     android:title="Battery Threshold"
     android:inputType="number"/>
   <CheckBoxPreference
-    android:title="Start on Boot"
-    android:defaultValue="true"
-    android:summary="Start Speedometer automatically when the phone boots?"
-    android:key="@string/startOnBootPrefKey"/>
+      android:title="Start on Boot"
+      android:defaultValue="true"
+      android:summary="Start Speedometer automatically when the phone boots?"
+      android:key="@string/startOnBootPrefKey"/>
   <ListPreference
     android:title="Select Authentication Account"
     android:summary="Account used for checkin authentication."

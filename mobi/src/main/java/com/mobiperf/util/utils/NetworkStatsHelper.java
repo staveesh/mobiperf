@@ -31,10 +31,10 @@ public class NetworkStatsHelper {
         packageUid=uid;
     }
 
-    public long getPackageRxBytesWifi(long startTime,long endTime) {
+    public long getPackageRxBytesWifi(long startTime,long endTime, int type) {
         NetworkStats networkStats = null;
         networkStats = networkStatsManager.queryDetailsForUid(
-                ConnectivityManager.TYPE_WIFI,
+                type,
                 "",
                  startTime,
                 endTime,
@@ -50,10 +50,10 @@ public class NetworkStatsHelper {
         return rxBytes;
     }
 
-    public long getPackageTxBytesWifi(long startTime,long endTime) {
+    public long getPackageTxBytesWifi(long startTime,long endTime, int type) {
         NetworkStats networkStats = null;
         networkStats = networkStatsManager.queryDetailsForUid(
-                ConnectivityManager.TYPE_WIFI,
+                type,
                 "",
                 startTime,
                 endTime,

@@ -21,6 +21,7 @@ import com.mobiperf.util.Util;
 import android.accounts.AuthenticatorException;
 import android.accounts.OperationCanceledException;
 import android.content.Context;
+import android.util.Log;
 
 import org.apache.http.HttpVersion;
 import org.apache.http.client.CookieStore;
@@ -80,7 +81,6 @@ public class Checkin {
     private Context context;
     private Date lastCheckin;
     private volatile Cookie authCookie = null;
-    private AccountSelector accountSelector = null;
     PhoneUtils phoneUtils;
 
     public Checkin(Context context) {
@@ -92,9 +92,7 @@ public class Checkin {
      * Shuts down the checkin thread
      */
     public void shutDown() {
-        if (this.accountSelector != null) {
-            this.accountSelector.shutDown();
-        }
+        Log.i(CHECK_IN_TAG, "shutting down ");
     }
 
     /**
@@ -166,7 +164,6 @@ public class Checkin {
 
             this.lastCheckin = new Date();
             Logger.i("Checkin complete, got " + schedule.size() + " new tasks");
-            checkinSuccess = true;
             return schedule;
         } catch (JSONException e) {
             Logger.e("Got exception during checkin", e);
@@ -174,12 +171,6 @@ public class Checkin {
         } catch (IOException e) {
             Logger.e("Got exception during checkin", e);
             throw e;
-        } finally {
-            if (!checkinSuccess) {
-                // Failure probably due to authToken expiration. Will authenticate upon next checkin.
-                this.accountSelector.setAuthImmediately(true);
-                this.authCookie = null;
-            }
         }
     }
 
@@ -404,69 +395,6 @@ public class Checkin {
         return request;
     }
 
-    /**
-     * Initiates the process to get the authentication cookie for the user account. Returns
-     * immediately.
-     */
-    public synchronized void getCookie() {
-        if (phoneUtils.isTestingServer(phoneUtils.getServerUrl())) {
-            Logger.i("Setting fakeAuthCookie");
-            authCookie = getFakeAuthCookie();
-            return;
-        }
-        if (this.accountSelector == null) {
-            accountSelector = new AccountSelector(context);
-        }
-
-        try {
-            // Authenticates if there are no ongoing ones
-            if (accountSelector.getCheckinFuture() == null) {
-                accountSelector.authenticate();
-            }
-        } catch (OperationCanceledException e) {
-            Logger.e("Unable to get auth cookie", e);
-        } catch (AuthenticatorException e) {
-            Logger.e("Unable to get auth cookie", e);
-        } catch (IOException e) {
-            Logger.e("Unable to get auth cookie", e);
-        }
-    }
-
-    /**
-     * Resets the checkin variables in AccountSelector
-     */
-    public void initializeAccountSelector() {
-        accountSelector.resetCheckinFuture();
-        accountSelector.setAuthImmediately(false);
-    }
-
-    private synchronized boolean checkGetCookie() {
-        if (phoneUtils.isTestingServer(phoneUtils.getServerUrl())) {
-            authCookie = getFakeAuthCookie();
-            return true;
-        }
-        Future<Cookie> getCookieFuture = accountSelector.getCheckinFuture();
-        if (getCookieFuture == null) {
-            Logger.i("checkGetCookie called too early");
-            return false;
-        }
-        if (getCookieFuture.isDone()) {
-            try {
-                authCookie = getCookieFuture.get();
-                Logger.i("Got authCookie: " + authCookie);
-                return true;
-            } catch (InterruptedException e) {
-                Logger.e("Unable to get auth cookie", e);
-                return false;
-            } catch (ExecutionException e) {
-                Logger.e("Unable to get auth cookie", e);
-                return false;
-            }
-        } else {
-            Logger.i("getCookieFuture is not yet finished");
-            return false;
-        }
-    }
 
     private void sendStringMsg(String str) {
         UpdateIntent intent = new UpdateIntent(str, UpdateIntent.MSG_ACTION);

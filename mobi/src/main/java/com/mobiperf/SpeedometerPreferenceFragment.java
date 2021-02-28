@@ -17,6 +17,7 @@ package com.mobiperf;
 
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.support.v7.preference.CheckBoxPreference;
 import android.support.v7.preference.ListPreference;
 import android.support.v7.preference.Preference;
 import android.support.v7.preference.PreferenceFragmentCompat;
@@ -84,31 +85,8 @@ public class SpeedometerPreferenceFragment extends PreferenceFragmentCompat {
             }
         };
 
-        ListPreference lp = (ListPreference) findPreference(Config.PREF_KEY_ACCOUNT);
-        final CharSequence[] items = AccountSelector.getAccountList(this.getContext());
-        lp.setEntries(items);
-        lp.setEntryValues(items);
-
         // Restore current settings.
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this.getContext());
-        String selectedAccount = prefs.getString(Config.PREF_KEY_SELECTED_ACCOUNT, null);
-        if (selectedAccount != null) {
-            lp.setValue(selectedAccount);
-        }
-
-        lp.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
-            @Override
-            public boolean onPreferenceChange(Preference preference, Object newValue) {
-                final String account = newValue.toString();
-                Logger.i("account selected is: " + account);
-
-                SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getContext());
-                SharedPreferences.Editor editor = prefs.edit();
-                editor.putString(Config.PREF_KEY_SELECTED_ACCOUNT, account);
-                editor.apply();
-                return true;
-            }
-        });
 
         // Restore current data limit settings
         ListPreference dataLimitLp = (ListPreference) findPreference(Config.PREF_KEY_DATA_LIMIT);
@@ -140,6 +118,21 @@ public class SpeedometerPreferenceFragment extends PreferenceFragmentCompat {
                 SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getContext());
                 SharedPreferences.Editor editor = prefs.edit();
                 editor.putString(Config.PREF_KEY_SELECTED_DATA_LIMIT, limit);
+                editor.apply();
+                return true;
+            }
+        });
+
+        CheckBoxPreference measurementsPref = (CheckBoxPreference) findPreference(Config.PREF_KEY_MEASUREMENTS_ENABLED);
+        measurementsPref.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
+            @Override
+            public boolean onPreferenceChange(Preference preference, Object o) {
+                final boolean newPref = (boolean) o;
+                Logger.i("Measurements enabled : " + newPref);
+
+                SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getContext());
+                SharedPreferences.Editor editor = prefs.edit();
+                editor.putBoolean(Config.PREF_KEY_MEASUREMENTS_ENABLED, newPref);
                 editor.apply();
                 return true;
             }
