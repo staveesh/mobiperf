@@ -66,6 +66,7 @@ public class SpeedometerApp extends AppCompatActivity implements TabLayout.OnTab
     public static EnumMap<Config.PERMISSION_IDS, Boolean> PERMISSION_SETTINGS;
 
     private boolean userConsented = false;
+    private String userUniversity = null;
     private String selectedAccount = null;
 
     private MeasurementScheduler scheduler;
@@ -215,7 +216,9 @@ public class SpeedometerApp extends AppCompatActivity implements TabLayout.OnTab
             // double check the user consent selection
             consentDialogWrapper();
         }
-
+        if(userUniversity == null){
+            universityDialogWrapper();
+        }
         /* Set the DNS cache TTL to 0 such that measurements can be more accurate.
          * However, it is known that the current Android OS does not take actions
          * on these properties but may enforce them in future versions.
@@ -547,6 +550,12 @@ public class SpeedometerApp extends AppCompatActivity implements TabLayout.OnTab
         userConsented = prefs.getBoolean(Config.PREF_KEY_CONSENTED, false);
     }
 
+    private void restoreUserUniversity(){
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(
+                getApplicationContext());
+        userUniversity = prefs.getString(Config.PREF_KEY_USER_UNIVERSITY, null);
+    }
+
     /**
      * A wrapper function to check user consent selection,
      * and generate one if user haven't agreed on.
@@ -556,6 +565,13 @@ public class SpeedometerApp extends AppCompatActivity implements TabLayout.OnTab
         if (!userConsented) {
             // Show the consent dialog. After user select the content
             showDialog();
+        }
+    }
+
+    private void universityDialogWrapper(){
+        restoreUserUniversity();
+        if(userUniversity == null){
+            showUniversityDialog();
         }
     }
 
@@ -629,6 +645,11 @@ public class SpeedometerApp extends AppCompatActivity implements TabLayout.OnTab
         newFragment.show(getSupportFragmentManager(), "dialog");
     }
 
+    void showUniversityDialog(){
+        DialogFragment selectUni = UniversityDialog.newInstance();
+        selectUni.show(getSupportFragmentManager(), "university");
+    }
+
     public void doPositiveClick() {
         Log.i("FragmentAlertDialog", "Positive click!");
         recordUserConsent();
@@ -641,6 +662,18 @@ public class SpeedometerApp extends AppCompatActivity implements TabLayout.OnTab
     public void doNegativeClick() {
         Log.i("FragmentAlertDialog", "Negative click!");
         quitApp();
+    }
+
+    public void userCancelled(){
+        Log.i("UniversityAlertDialog", "No university selected!");
+        quitApp();
+    }
+
+    public void universitySelected(String selection){
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getBaseContext());
+        SharedPreferences.Editor editor = prefs.edit();
+        editor.putString(Config.PREF_KEY_USER_UNIVERSITY, selection);
+        editor.apply();
     }
 
     String getSelectedAccount() {
