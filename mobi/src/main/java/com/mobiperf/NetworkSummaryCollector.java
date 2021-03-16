@@ -11,7 +11,9 @@ import android.content.pm.PackageManager;
 import android.net.ConnectivityManager;
 import android.os.Build;
 import android.support.v7.preference.PreferenceManager;
+import android.util.Log;
 
+import com.mobiperf.util.MeasurementJsonConvertor;
 import com.mobiperf.util.PhoneUtils;
 import com.mobiperf.util.Util;
 import com.mobiperf.util.model.Package;
@@ -19,12 +21,20 @@ import com.mobiperf.util.utils.NetworkStatsHelper;
 import com.mobiperf.util.utils.PackageManagerHelper;
 
 import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.net.Socket;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Scanner;
+import java.util.TimeZone;
 
 public class NetworkSummaryCollector implements Runnable {
     public static final int READ_PHONE_STATE_REQUEST = 1;
@@ -38,10 +48,20 @@ public class NetworkSummaryCollector implements Runnable {
     public void run() {
         Logger.d("Collector Thread has started");
         long endTime = System.currentTimeMillis();
-        long startTime = endTime-(24*3600*1000); //minus 24 hrs
+        String timestamp = summaryCheckin();
+        long startTime = endTime-(24*3600*1000); //minus 24 hrs;
+        if(timestamp != null){
+            SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
+            df.setTimeZone(TimeZone.getTimeZone("UTC"));
+            try {
+                startTime = df.parse(timestamp).getTime();
+            } catch (ParseException e) {
+                Log.e("NetworkSummaryCollector", "Invalid time returned from server");
+            }
+        }
         List<Package> packageList=getPackagesData();
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
-        String university = prefs.getString(Config.PREF_KEY_USER_UNIVERSITY, null);
+        String institution = prefs.getString(Config.PREF_KEY_USER_INSTITUTION, null);
         String deviceId = PhoneUtils.getPhoneUtils().getDeviceInfo().deviceId;
         JSONArray wifiSummary = new JSONArray();
         JSONArray mobileSummary = new JSONArray();
@@ -54,24 +74,24 @@ public class NetworkSummaryCollector implements Runnable {
                 if(!wifiPayload.isEmptyPayload()) {
                     JSONObject appData = new JSONObject();
                     appData.put("name", packageName);
-                    appData.put("Rx",wifiPayload.getRx());
-                    appData.put("Tx",wifiPayload.getTx());
+                    appData.put("rx",wifiPayload.getRx());
+                    appData.put("tx",wifiPayload.getTx());
                     wifiSummary.put(appData);
                 }
                 if(!mobilePayload.isEmptyPayload()) {
                     JSONObject appData = new JSONObject();
                     appData.put("name", packageName);
-                    appData.put("Rx",mobilePayload.getRx());
-                    appData.put("Tx",mobilePayload.getTx());
+                    appData.put("rx",mobilePayload.getRx());
+                    appData.put("tx",mobilePayload.getTx());
                     mobileSummary.put(appData);
                 }
             }
             JSONObject blob = new JSONObject();
             blob.put("requestType","summary");
-            blob.put("institution", university);
+            blob.put("institution", institution);
             blob.put("deviceId", deviceId);
-            blob.put("userName", SpeedometerApp.getCurrentApp().getSelectedAccount());
-            blob.put("Date",endTime);
+            blob.put("startTime", startTime);
+            blob.put("endTime",endTime);
             blob.put("wifiSummary",wifiSummary);
             blob.put("mobileSummary",mobileSummary);
             Logger.d(blob.toString());
@@ -133,6 +153,38 @@ public class NetworkSummaryCollector implements Runnable {
         long mobileWifiRx = networkStatsHelper.getPackageRxBytesWifi(start,end, type);
         long mobileWifiTx = networkStatsHelper.getPackageTxBytesWifi(start,end, type);
         return new DataPayload(mobileWifiRx,mobileWifiTx);
+    }
+
+    private String summaryCheckin() {
+        try {
+            Socket serverSocket = new Socket(Util.resolveServer(), Config.SERVER_PORT);
+            Logger.d("Server Socket Connection Established");
+            PrintWriter out = new PrintWriter(serverSocket.getOutputStream());
+            JSONObject summaryCheckInRequest = new JSONObject();
+            try {
+                summaryCheckInRequest.put("requestType", "SUMMARY-CHECKIN");
+                summaryCheckInRequest.put("deviceId", PhoneUtils.getPhoneUtils().getDeviceId());
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+            out.println(summaryCheckInRequest.toString());
+            out.flush();
+            Logger.d(summaryCheckInRequest.toString());
+            Scanner in = new Scanner(serverSocket.getInputStream());
+            String result = "";
+            while (true) {
+                if (in.hasNextLine()) {
+                    result = in.nextLine();
+                    break;
+                }
+            }
+            Logger.d("the result of summary checkin is \n" + result);
+            serverSocket.close();
+            return result;
+        } catch (IOException e){
+            Log.e("NetworkSummaryCollector", "summaryCheckin: ", e);
+        }
+        return null;
     }
 
 }

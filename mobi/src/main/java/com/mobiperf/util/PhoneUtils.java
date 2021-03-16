@@ -775,7 +775,7 @@ public class PhoneUtils {
     }
 
     @SuppressLint("MissingPermission")
-    private String getDeviceId() {
+    public String getDeviceId() {
         String deviceId = null;
         if (ActivityCompat.checkSelfPermission(context,
                 Manifest.permission.READ_PHONE_STATE) == PackageManager.PERMISSION_GRANTED)

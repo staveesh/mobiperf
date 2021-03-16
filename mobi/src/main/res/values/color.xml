@@ -5,4 +5,5 @@
     <color name="lightGray">#888888</color>
     <color name="white">#FFFFFF</color>
     <color name="task_bar">#698A8A</color>
+    <color name="black">#000000</color>
 </resources>

@@ -68,5 +68,8 @@
     <string name="Expand_Advanced_Settings">Expand Advanced Settings</string>
     <string name="Collapse_Advanced_Settings">Collapse Advanced Settings</string>
     <string name="enable_measurements">PREF_KEY_MEASUREMENTS_ENABLED</string>
+    <string name="app_description">This application collects the usage data of apps from your phone at regular intervals and sends it to a server for the purpose of academic research. All information being sent to the server is anonymized and researchers in no way can associate the collected data with your identity. </string>
+    <string name="helpicon">helpIcon</string>
+    <string name="help_image">Help Image</string>
 
 </resources>

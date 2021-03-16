@@ -15,7 +15,6 @@
 package com.mobiperf;
 
 import android.Manifest;
-import android.accounts.AccountManager;
 import android.annotation.TargetApi;
 import android.app.AppOpsManager;
 import android.content.BroadcastReceiver;
@@ -45,6 +44,8 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.ImageView;
 import android.widget.TabHost;
 import android.widget.TextView;
 
@@ -64,14 +65,15 @@ public class SpeedometerApp extends AppCompatActivity implements TabLayout.OnTab
     public static final int PERMISSIONS_REQUEST_CODE = 6789;
     public static EnumMap<Config.PERMISSION_IDS, Boolean> PERMISSION_SETTINGS;
 
-    private String userUniversity = null;
+    private String institution = null;
 
     private MeasurementScheduler scheduler;
     private TabHost tabHost;
     private boolean isBound = false;
     private boolean isBindingToService = false;
     private BroadcastReceiver receiver;
-    TextView statusBar, statsBar;
+    TextView statusBar, statsBar, instTxt;
+    ImageView helpImage;
 
     private static SpeedometerApp speedometerApp;
     //This is our tablayout
@@ -94,10 +96,12 @@ public class SpeedometerApp extends AppCompatActivity implements TabLayout.OnTab
             scheduler = binder.getService();
             isBound = true;
             isBindingToService = false;
-            initializeStatusBar();
-            SpeedometerApp.this.sendBroadcast(new UpdateIntent("",
-                    UpdateIntent.SCHEDULER_CONNECTED_ACTION));
-            CheckInExecutor.startCollector();
+            if(isMeasurementEnabled()) {
+                initializeStatusBar();
+                SpeedometerApp.this.sendBroadcast(new UpdateIntent("",
+                        UpdateIntent.SCHEDULER_CONNECTED_ACTION));
+                CheckInExecutor.startCollector();
+            }
         }
 
         @Override
@@ -206,8 +210,8 @@ public class SpeedometerApp extends AppCompatActivity implements TabLayout.OnTab
         super.onCreate(savedInstanceState);
         speedometerApp = this;
         setContentView(R.layout.main);
-        if(userUniversity == null){
-            universityDialogWrapper();
+        if(institution == null){
+            institutionDialogWrapper();
         }
         /* Set the DNS cache TTL to 0 such that measurements can be more accurate.
          * However, it is known that the current Android OS does not take actions
@@ -218,55 +222,7 @@ public class SpeedometerApp extends AppCompatActivity implements TabLayout.OnTab
         Security.setProperty("networkaddress.cache.ttl", "0");
         Security.setProperty("networkaddress.cache.negative.ttl", "0");
 
-        Resources res = getResources(); // Resource object to get Drawables
-
-        statusBar = findViewById(R.id.systemStatusBar);
-        statsBar = findViewById(R.id.systemStatsBar);
-
-        //Adding toolbar to the activity
-        Toolbar toolbar = findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
-
-        //Initializing the tablayout
-        tabLayout = (TabLayout) findViewById(R.id.tabLayout);
-
-        //Adding the tabs using addTab() method
-        tabLayout.addTab(tabLayout.newTab().setText(MeasurementCreationFragment.TAB_TAG).setIcon(R.drawable.ic_tab_user_measurement));
-        tabLayout.addTab(tabLayout.newTab().setText(ResultsConsoleFragment.TAB_TAG).setIcon(R.drawable.ic_tab_results_icon));
-        tabLayout.addTab(tabLayout.newTab().setText(MeasurementScheduleConsoleFragment.TAB_TAG).setIcon(R.drawable.ic_tab_schedules));
-        tabLayout.setTabGravity(TabLayout.GRAVITY_FILL);
-
-        //Initializing viewPager
-        viewPager = (ViewPager) findViewById(R.id.pager);
-
-        //Creating our pager adapter
-        Pager adapter = new Pager(getSupportFragmentManager(), tabLayout.getTabCount());
-
-        //Adding adapter to pager
-        viewPager.setAdapter(adapter);
-        viewPager.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
-            @Override
-            public void onPageScrolled(int i, float v, int i1) {
-
-            }
-
-            @Override
-            public void onPageSelected(int i) {
-                TabLayout.Tab tab = tabLayout.getTabAt(i);
-                if (tab != null) {
-                    tab.select();
-                }
-            }
-
-            @Override
-            public void onPageScrollStateChanged(int i) {
-
-            }
-        });
-        //Adding onTabSelectedListener to swipe views
-        tabLayout.addOnTabSelectedListener(this);
-
-
+        prepareUI();
         // We only need one instance of the scheduler thread
         Intent intent = new Intent(this, MeasurementScheduler.class);
         this.startService(intent);
@@ -280,12 +236,12 @@ public class SpeedometerApp extends AppCompatActivity implements TabLayout.OnTab
                 if (statusMsg != null) {
                     Log.d("Broadcast information", statusMsg);
                     updateStatusBar(statusMsg);
-                } else if (scheduler != null) {
+                } else if (scheduler != null && isMeasurementEnabled()) {
                     initializeStatusBar();
                 }
 
                 String statsMsg = intent.getStringExtra(UpdateIntent.STATS_MSG_PAYLOAD);
-                if (statsMsg != null) {
+                if (statsMsg != null && isMeasurementEnabled()) {
                     updateStatsBar(statsMsg);
                 }
             }
@@ -293,6 +249,70 @@ public class SpeedometerApp extends AppCompatActivity implements TabLayout.OnTab
         IntentFilter filter = new IntentFilter();
         filter.addAction(UpdateIntent.SYSTEM_STATUS_UPDATE_ACTION);
         this.registerReceiver(this.receiver, filter);
+    }
+
+    private void prepareUI(){
+        if(isMeasurementEnabled()) {
+            Resources res = getResources(); // Resource object to get Drawables
+
+            statusBar = findViewById(R.id.systemStatusBar);
+            statsBar = findViewById(R.id.systemStatsBar);
+
+            //Adding toolbar to the activity
+            Toolbar toolbar = findViewById(R.id.toolbar);
+            toolbar.setVisibility(View.VISIBLE);
+            setSupportActionBar(toolbar);
+
+            //Initializing the tablayout
+            tabHost = findViewById(R.id.tabhost);
+            tabHost.setVisibility(View.VISIBLE);
+            tabLayout = (TabLayout) findViewById(R.id.tabLayout);
+
+            //Adding the tabs using addTab() method
+            tabLayout.addTab(tabLayout.newTab().setText(MeasurementCreationFragment.TAB_TAG).setIcon(R.drawable.ic_tab_user_measurement));
+            tabLayout.addTab(tabLayout.newTab().setText(ResultsConsoleFragment.TAB_TAG).setIcon(R.drawable.ic_tab_results_icon));
+            tabLayout.addTab(tabLayout.newTab().setText(MeasurementScheduleConsoleFragment.TAB_TAG).setIcon(R.drawable.ic_tab_schedules));
+            tabLayout.setTabGravity(TabLayout.GRAVITY_FILL);
+
+            //Initializing viewPager
+            viewPager = (ViewPager) findViewById(R.id.pager);
+
+            //Creating our pager adapter
+            Pager adapter = new Pager(getSupportFragmentManager(), tabLayout.getTabCount());
+
+            //Adding adapter to pager
+            viewPager.setAdapter(adapter);
+            viewPager.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
+                @Override
+                public void onPageScrolled(int i, float v, int i1) {
+
+                }
+
+                @Override
+                public void onPageSelected(int i) {
+                    TabLayout.Tab tab = tabLayout.getTabAt(i);
+                    if (tab != null) {
+                        tab.select();
+                    }
+                }
+
+                @Override
+                public void onPageScrollStateChanged(int i) {
+
+                }
+            });
+            //Adding onTabSelectedListener to swipe views
+            tabLayout.addOnTabSelectedListener(this);
+        }
+        else{
+            instTxt = findViewById(R.id.instTxt);
+            helpImage = findViewById(R.id.helpImage);
+            if(institution != null) {
+                instTxt.setText(R.string.app_description);
+                instTxt.setVisibility(View.VISIBLE);
+                helpImage.setVisibility(View.VISIBLE);
+            }
+        }
     }
 
     private void requestReadNetworkHistoryAccess() {
@@ -504,16 +524,16 @@ public class SpeedometerApp extends AppCompatActivity implements TabLayout.OnTab
         editor.commit();
     }
 
-    private void restoreUserUniversity(){
+    private void restoreUserInstitution(){
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(
                 getApplicationContext());
-        userUniversity = prefs.getString(Config.PREF_KEY_USER_UNIVERSITY, null);
+        institution = prefs.getString(Config.PREF_KEY_USER_INSTITUTION, null);
     }
 
-    private void universityDialogWrapper(){
-        restoreUserUniversity();
-        if(userUniversity == null){
-            showUniversityDialog();
+    private void institutionDialogWrapper(){
+        restoreUserInstitution();
+        if(institution == null){
+            showInstitutionDialog();
         }
     }
 
@@ -566,21 +586,23 @@ public class SpeedometerApp extends AppCompatActivity implements TabLayout.OnTab
         return speedometerApp;
     }
 
-    void showUniversityDialog(){
-        DialogFragment selectUni = UniversityDialog.newInstance();
-        selectUni.show(getSupportFragmentManager(), "university");
+    void showInstitutionDialog(){
+        DialogFragment selectUni = InstitutionDialog.newInstance();
+        selectUni.show(getSupportFragmentManager(), "institution");
     }
 
     public void userCancelled(){
-        Log.i("UniversityAlertDialog", "No university selected!");
+        Log.i("Institution", "No institution selected!");
         quitApp();
     }
 
-    public void universitySelected(String selection){
+    public void institutionSelected(String selection){
+        institution = selection;
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getBaseContext());
         SharedPreferences.Editor editor = prefs.edit();
-        editor.putString(Config.PREF_KEY_USER_UNIVERSITY, selection);
+        editor.putString(Config.PREF_KEY_USER_INSTITUTION, selection);
         editor.apply();
+        prepareUI();
     }
 
     String getSelectedAccount() {
@@ -597,5 +619,11 @@ public class SpeedometerApp extends AppCompatActivity implements TabLayout.OnTab
             s=s.substring(s.lastIndexOf('.') + 1);
             PERMISSION_SETTINGS.put(Config.PERMISSION_IDS.valueOf(s),grantResults[i] == PackageManager.PERMISSION_GRANTED);
         }
+    }
+
+    private boolean isMeasurementEnabled(){
+        return institution != null && (institution.equalsIgnoreCase("DRC")
+                || institution.equalsIgnoreCase("iNethi")
+                || institution.equalsIgnoreCase("Others"));
     }
 }

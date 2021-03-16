@@ -9,10 +9,10 @@ import android.support.v4.app.DialogFragment;
 import android.support.v7.app.AlertDialog;
 import android.widget.ArrayAdapter;
 
-public class UniversityDialog extends DialogFragment {
+public class InstitutionDialog extends DialogFragment {
 
-    public static UniversityDialog newInstance() {
-        return new UniversityDialog();
+    public static InstitutionDialog newInstance() {
+        return new InstitutionDialog();
     }
 
     @NonNull
@@ -21,9 +21,12 @@ public class UniversityDialog extends DialogFragment {
         AlertDialog.Builder alertBuilder = new AlertDialog.Builder(getActivity());
         alertBuilder.setTitle("Select your University");
         final ArrayAdapter<String> adapter = new ArrayAdapter<String>(getActivity(), R.layout.list_item);
-        adapter.add("Cape Peninsula University of Technology");
-        adapter.add("University of Cape Town");
-        adapter.add("University of Western Cape");
+        adapter.add("CPUT");
+        adapter.add("UCT");
+        adapter.add("UWC");
+        adapter.add("DRC");
+        adapter.add("iNethi");
+        adapter.add("Other");
 
         alertBuilder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
             @Override
@@ -36,7 +39,7 @@ public class UniversityDialog extends DialogFragment {
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 String name = adapter.getItem(which);
-                ((SpeedometerApp) getActivity()).universitySelected(name);
+                ((SpeedometerApp) getActivity()).institutionSelected(name);
             }
         });
 
