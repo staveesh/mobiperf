@@ -91,9 +91,9 @@ public class PingTask extends MeasurementTask {
 
     public PingDesc(String key, Date startTime,
                     Date endTime, double intervalSec, long count, long priority, 
-                    Map<String, String> params) throws InvalidParameterException {
+                    Map<String, String> params, int instanceNumber) throws InvalidParameterException {
       super(PingTask.TYPE, key, startTime, endTime, intervalSec, count,
-          priority, params);  
+          priority, params, instanceNumber);
       initializeParams(params);
       if (this.target == null || this.target.length() == 0) {
         throw new InvalidParameterException("PingTask cannot be created due "
@@ -137,7 +137,7 @@ public class PingTask extends MeasurementTask {
   
   public PingTask(MeasurementDesc desc, Context parent) {
     super(new PingDesc(desc.key, desc.startTime, desc.endTime, desc.intervalSec,
-      desc.count, desc.priority, desc.parameters), parent);
+      desc.count, desc.priority, desc.parameters, desc.instanceNumber), parent);
     dataConsumed = 0;
   }
   
@@ -148,7 +148,7 @@ public class PingTask extends MeasurementTask {
   public MeasurementTask clone() {
     MeasurementDesc desc = this.measurementDesc;
     PingDesc newDesc = new PingDesc(desc.key, desc.startTime, desc.endTime, 
-          desc.intervalSec, desc.count, desc.priority, desc.parameters);
+          desc.intervalSec, desc.count, desc.priority, desc.parameters, desc.instanceNumber);
     return new PingTask(newDesc, parent);
   }
   
@@ -239,7 +239,7 @@ public class PingTask extends MeasurementTask {
     
     MeasurementResult result = new MeasurementResult(phoneUtils.getDeviceInfo().deviceId,
         phoneUtils.getDeviceProperty(), PingTask.TYPE, System.currentTimeMillis() * 1000,
-        success, this.measurementDesc);
+        success, this.measurementDesc, duration);
 
     result.addResult("time_ms", duration);
     result.addResult("target_ip", targetIp);

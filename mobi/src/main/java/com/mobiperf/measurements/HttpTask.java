@@ -77,7 +77,7 @@ public class HttpTask extends MeasurementTask {
 
   public HttpTask(MeasurementDesc desc, Context parent) {
     super(new HttpDesc(desc.key, desc.startTime, desc.endTime, desc.intervalSec,
-      desc.count, desc.priority, desc.parameters), parent);
+      desc.count, desc.priority, desc.parameters, desc.instanceNumber), parent);
     dataConsumed = 0;
   }
   
@@ -91,9 +91,9 @@ public class HttpTask extends MeasurementTask {
     private String body;
 
     public HttpDesc(String key, Date startTime, Date endTime,
-                      double intervalSec, long count, long priority, Map<String, String> params) 
+                      double intervalSec, long count, long priority, Map<String, String> params, int instanceNumber)
                       throws InvalidParameterException {
-      super(HttpTask.TYPE, key, startTime, endTime, intervalSec, count, priority, params);
+      super(HttpTask.TYPE, key, startTime, endTime, intervalSec, count, priority, params, instanceNumber);
       initializeParams(params);
       if (this.url == null || this.url.length() == 0) {
         throw new InvalidParameterException("URL for http task is null");
@@ -134,7 +134,7 @@ public class HttpTask extends MeasurementTask {
   public MeasurementTask clone() {
     MeasurementDesc desc = this.measurementDesc;
     HttpDesc newDesc = new HttpDesc(desc.key, desc.startTime, desc.endTime, 
-        desc.intervalSec, desc.count, desc.priority, desc.parameters);
+        desc.intervalSec, desc.count, desc.priority, desc.parameters, desc.instanceNumber);
     return new HttpTask(newDesc, parent);
   }
   
@@ -199,7 +199,7 @@ public class HttpTask extends MeasurementTask {
       
       long startTime = System.currentTimeMillis();
       HttpResponse response = httpClient.execute(request);
-      
+      duration = System.currentTimeMillis() - startTime;
       /* TODO(Wenjie): HttpClient does not automatically handle the following codes
        * 301 Moved Permanently. HttpStatus.SC_MOVED_PERMANENTLY
        * 302 Moved Temporarily. HttpStatus.SC_MOVED_TEMPORARILY
@@ -239,7 +239,7 @@ public class HttpTask extends MeasurementTask {
           this.progress = Math.min(Config.MAX_PROGRESS_BAR_VALUE, progress);
           broadcastProgressForUser(this.progress);
         }
-        duration = System.currentTimeMillis() - startTime;
+
       }
                  
       Header[] responseHeaders = response.getAllHeaders();
@@ -261,7 +261,7 @@ public class HttpTask extends MeasurementTask {
       
       MeasurementResult result = new MeasurementResult(phoneUtils.getDeviceInfo().deviceId,
           phoneUtils.getDeviceProperty(), HttpTask.TYPE, System.currentTimeMillis() * 1000,
-          success, this.measurementDesc);
+          success, this.measurementDesc, duration);
       
       result.addResult("code", statusCode);      
      

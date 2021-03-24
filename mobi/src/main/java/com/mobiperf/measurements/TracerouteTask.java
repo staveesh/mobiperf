@@ -84,9 +84,9 @@ public class TracerouteTask extends MeasurementTask {
     
     public TracerouteDesc(String key, Date startTime,
                           Date endTime, double intervalSec, long count, long priority, 
-                          Map<String, String> params) throws InvalidParameterException {
+                          Map<String, String> params, int instanceNumber) throws InvalidParameterException {
       super(TracerouteTask.TYPE, key, startTime, endTime, intervalSec, count, 
-          priority, params);
+          priority, params, instanceNumber);
       initializeParams(params);
       
       if (target == null || target.length() == 0) {
@@ -149,7 +149,7 @@ public class TracerouteTask extends MeasurementTask {
   
   public TracerouteTask(MeasurementDesc desc, Context parent) {
     super(new TracerouteDesc(desc.key, desc.startTime, desc.endTime, desc.intervalSec,
-      desc.count, desc.priority, desc.parameters), parent);    
+      desc.count, desc.priority, desc.parameters, desc.instanceNumber), parent);
     dataConsumed = 0;
   }
   
@@ -160,7 +160,7 @@ public class TracerouteTask extends MeasurementTask {
   public MeasurementTask clone() {
     MeasurementDesc desc = this.measurementDesc;
     TracerouteDesc newDesc = new TracerouteDesc(desc.key, desc.startTime, desc.endTime, 
-      desc.intervalSec, desc.count, desc.priority, desc.parameters);
+      desc.intervalSec, desc.count, desc.priority, desc.parameters, desc.instanceNumber);
     return new TracerouteTask(newDesc, parent);
   }
 
@@ -277,7 +277,7 @@ public class TracerouteTask extends MeasurementTask {
             PhoneUtils phoneUtils = PhoneUtils.getPhoneUtils();
             result = new MeasurementResult(phoneUtils.getDeviceInfo().deviceId, 
                 phoneUtils.getDeviceProperty(), TracerouteTask.TYPE, 
-                System.currentTimeMillis() * 1000, success, this.measurementDesc);
+                System.currentTimeMillis() * 1000, success, this.measurementDesc, duration);
             result.addResult("num_hops", ttl);
             result.addResult("time_ms", duration);
             for (int i = 0; i < hopHosts.size(); i++) {

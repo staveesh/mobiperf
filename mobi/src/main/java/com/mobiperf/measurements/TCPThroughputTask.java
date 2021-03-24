@@ -89,7 +89,7 @@ public class TCPThroughputTask extends MeasurementTask {
   // class constructor
   public TCPThroughputTask(MeasurementDesc desc, Context context) {
     super(new TCPThroughputDesc(desc.key, desc.startTime, desc.endTime, 
-          desc.intervalSec, desc.count, desc.priority, desc.parameters), context);
+          desc.intervalSec, desc.count, desc.priority, desc.parameters, desc.instanceNumber), context);
     this.context = context;
     Logger.i("Create new throughput task");
   }
@@ -119,10 +119,10 @@ public class TCPThroughputTask extends MeasurementTask {
 
     public TCPThroughputDesc(String key, Date startTime,
                              Date endTime, double intervalSec, long count, 
-                             long priority, Map<String, String> params) 
+                             long priority, Map<String, String> params, int instanceNumber)
                              throws InvalidParameterException {
       super(TCPThroughputTask.TYPE, key, startTime, endTime, intervalSec, count,
-            priority, params);
+            priority, params, instanceNumber);
       initializeParams(params);
       if (this.target == null || this.target.length() == 0) {
         throw new InvalidParameterException("TCPThroughputTask null target");
@@ -250,7 +250,7 @@ public class TCPThroughputTask extends MeasurementTask {
     TCPThroughputDesc newDesc = new TCPThroughputDesc(
                                 desc.key, desc.startTime, 
                                 desc.endTime, desc.intervalSec, desc.count, desc.priority,
-                                desc.parameters);
+                                desc.parameters, desc.instanceNumber);
     return new TCPThroughputTask(newDesc, parent);
   }
 
@@ -358,7 +358,7 @@ public class TCPThroughputTask extends MeasurementTask {
                                phoneUtils.getDeviceInfo().deviceId,
                                phoneUtils.getDeviceProperty(), TCPThroughputTask.TYPE,
                                System.currentTimeMillis() * 1000, isMeasurementSuccessful,
-                               this.measurementDesc);
+                               this.measurementDesc, (long) (this.taskDuration*1000));
     // TODO (Haokun): add more results if necessary
     result.addResult("tcp_speed_results", this.samplingResults);
     result.addResult("data_limit_exceeded", this.DATA_LIMIT_EXCEEDED);

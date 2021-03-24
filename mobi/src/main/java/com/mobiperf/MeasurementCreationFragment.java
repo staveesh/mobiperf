@@ -237,7 +237,7 @@ public class MeasurementCreationFragment extends Fragment {
                     Config.DEFAULT_USER_MEASUREMENT_INTERVAL_SEC,
                     Config.DEFAULT_USER_MEASUREMENT_COUNT,
                     MeasurementTask.USER_PRIORITY,
-                    params);
+                    params, 1);
             newTask = new PingTask(desc, getActivity().getApplicationContext());
             break;
           }
@@ -252,7 +252,7 @@ public class MeasurementCreationFragment extends Fragment {
                     Config.DEFAULT_USER_MEASUREMENT_INTERVAL_SEC,
                     Config.DEFAULT_USER_MEASUREMENT_COUNT,
                     MeasurementTask.USER_PRIORITY,
-                    params);
+                    params, 1);
             newTask = new HttpTask(desc, getActivity().getApplicationContext());
             break;
           }
@@ -266,7 +266,7 @@ public class MeasurementCreationFragment extends Fragment {
                     Config.DEFAULT_USER_MEASUREMENT_INTERVAL_SEC,
                     Config.DEFAULT_USER_MEASUREMENT_COUNT,
                     MeasurementTask.USER_PRIORITY,
-                    params);
+                    params, 1);
             newTask =
                     new TracerouteTask(desc, getActivity().getApplicationContext());
             showLengthWarning = true;
@@ -282,7 +282,7 @@ public class MeasurementCreationFragment extends Fragment {
                     Config.DEFAULT_USER_MEASUREMENT_INTERVAL_SEC,
                     Config.DEFAULT_USER_MEASUREMENT_COUNT,
                     MeasurementTask.USER_PRIORITY,
-                    params);
+                    params, 1);
             newTask =
                     new DnsLookupTask(desc, getActivity().getApplicationContext());
             break;
@@ -315,7 +315,7 @@ public class MeasurementCreationFragment extends Fragment {
                     Config.DEFAULT_USER_MEASUREMENT_INTERVAL_SEC,
                     Config.DEFAULT_USER_MEASUREMENT_COUNT,
                     MeasurementTask.USER_PRIORITY,
-                    params);
+                    params, 1);
             newTask = new UDPBurstTask(desc
                     , getActivity().getApplicationContext());
             break;
@@ -330,7 +330,7 @@ public class MeasurementCreationFragment extends Fragment {
                     Config.DEFAULT_USER_MEASUREMENT_INTERVAL_SEC,
                     Config.DEFAULT_USER_MEASUREMENT_COUNT,
                     MeasurementTask.USER_PRIORITY,
-                    params);
+                    params, 1);
             newTask = new TCPThroughputTask(desc,
                     getActivity().getApplicationContext());
             showLengthWarning = true;

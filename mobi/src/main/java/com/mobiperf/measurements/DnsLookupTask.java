@@ -54,9 +54,9 @@ public class DnsLookupTask extends MeasurementTask {
     private String server;
     
     public DnsLookupDesc(String key, Date startTime, Date endTime,
-        double intervalSec, long count, long priority, Map<String, String> params) {
+        double intervalSec, long count, long priority, Map<String, String> params, int instanceNumber) {
       super(DnsLookupTask.TYPE, key, startTime, endTime, intervalSec, count,
-          priority, params);
+          priority, params, instanceNumber);
       initializeParams(params);
       if (this.target == null || this.target.length() == 0) {
         throw new InvalidParameterException("LookupDnsTask cannot be created due " +
@@ -86,7 +86,7 @@ public class DnsLookupTask extends MeasurementTask {
   
   public DnsLookupTask(MeasurementDesc desc, Context parent) {
     super(new DnsLookupDesc(desc.key, desc.startTime, desc.endTime, desc.intervalSec,
-      desc.count, desc.priority, desc.parameters), parent);
+      desc.count, desc.priority, desc.parameters, desc.instanceNumber), parent);
   }
   
   /**
@@ -96,13 +96,13 @@ public class DnsLookupTask extends MeasurementTask {
   public MeasurementTask clone() {
     MeasurementDesc desc = this.measurementDesc;
     DnsLookupDesc newDesc = new DnsLookupDesc(desc.key, desc.startTime, desc.endTime, 
-      desc.intervalSec, desc.count, desc.priority, desc.parameters);
+      desc.intervalSec, desc.count, desc.priority, desc.parameters, desc.instanceNumber);
     return new DnsLookupTask(newDesc, parent);
   }
 
   @Override
   public MeasurementResult call() throws MeasurementError {   
-    long t1, t2;
+    long t1 = 0, t2 = 0;
     long totalTime = 0;
     InetAddress resultInet = null;
     int successCnt = 0;
@@ -130,7 +130,7 @@ public class DnsLookupTask extends MeasurementTask {
       PhoneUtils phoneUtils = PhoneUtils.getPhoneUtils();
       MeasurementResult result = new MeasurementResult(phoneUtils.getDeviceInfo().deviceId,
           phoneUtils.getDeviceProperty(), DnsLookupTask.TYPE, System.currentTimeMillis() * 1000,
-          true, this.measurementDesc);
+          true, this.measurementDesc, t2-t1);
       result.addResult("address", resultInet.getHostAddress());
       result.addResult("realHostname", resultInet.getCanonicalHostName());
       result.addResult("timeMs", totalTime / successCnt);

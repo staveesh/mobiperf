@@ -1206,7 +1206,7 @@ public class MeasurementScheduler extends Service {
     MeasurementResult result =
         new MeasurementResult(phoneUtils.getDeviceInfo().deviceId,
             phoneUtils.getDeviceProperty(), task.getType(),
-            System.currentTimeMillis() * 1000, false, task.measurementDesc);
+            System.currentTimeMillis() * 1000, false, task.measurementDesc, 0L);
     result.addResult("error", error.toString() + "\n" + getStackTrace(error));
     return result;
   }

@@ -56,6 +56,7 @@ public class MeasurementResult {
     private MeasurementDesc parameters;
     private HashMap<String, String> values;
     private boolean isExperiment;
+    private long executionTime;
     /**
      * @param deviceProperty
      * @param type
@@ -64,7 +65,7 @@ public class MeasurementResult {
      * @param measurementDesc
      */
     public MeasurementResult(String id, DeviceProperty deviceProperty, String type,
-                             long timeStamp, boolean success, MeasurementDesc measurementDesc) {
+                             long timeStamp, boolean success, MeasurementDesc measurementDesc, long executionTime) {
         super();
         this.taskKey = measurementDesc.key;
         this.deviceId = id;
@@ -77,6 +78,7 @@ public class MeasurementResult {
         this.parameters.parameters = null;
         this.accountName =SpeedometerApp.getCurrentApp().getSelectedAccount();
         this.values = new HashMap<>();
+        this.executionTime = executionTime;
     }
 
     private boolean hasExperimentTag(Map<String,String> map){

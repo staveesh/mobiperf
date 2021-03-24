@@ -150,9 +150,9 @@ public class RRCTask extends MeasurementTask {
 
     public RRCDesc(String key, Date startTime, Date endTime,
         double intervalSec, long count, long priority,
-        Map<String, String> params) {
+        Map<String, String> params, int instanceNumber) {
       super(RRCTask.TYPE, key, startTime, endTime, intervalSec, count,
-          priority, params);
+          priority, params, instanceNumber);
       initializeParams(params);
     }
 
@@ -703,7 +703,7 @@ public class RRCTask extends MeasurementTask {
 
   public RRCTask(MeasurementDesc desc, Context parent) {
     super(new RRCDesc(desc.key, desc.startTime, desc.endTime, desc.intervalSec,
-        desc.count, desc.priority, desc.parameters), parent);
+        desc.count, desc.priority, desc.parameters, desc.instanceNumber), parent);
     context = parent;
   }
 
@@ -712,14 +712,16 @@ public class RRCTask extends MeasurementTask {
     MeasurementDesc desc = this.measurementDesc;
     RRCDesc newDesc =
         new RRCDesc(desc.key, desc.startTime, desc.endTime, desc.intervalSec,
-            desc.count, desc.priority, desc.parameters);
+            desc.count, desc.priority, desc.parameters, desc.instanceNumber);
     return new RRCTask(newDesc, parent);
   }
 
   @Override
   public MeasurementResult call() throws MeasurementError {
+    long startTime = System.currentTimeMillis();
     RRCDesc desc = runInferenceTests();
-    MeasurementResult result=constructResultStandard(desc);
+    long duration = System.currentTimeMillis() - startTime;
+    MeasurementResult result=constructResultStandard(desc, duration);
     Util.sendResult(MeasurementJsonConvertor.toJsonString(result),DESCRIPTOR);
     Logger.d("RRCTask Results sending initiated");
     return result;
@@ -749,13 +751,13 @@ public class RRCTask extends MeasurementTask {
    * TCP, DNS and HTTP tests: the others are sent via a separate mechanism as they are stored 
    * separately. 
    */
-  private MeasurementResult constructResultStandard(RRCDesc desc) {
+  private MeasurementResult constructResultStandard(RRCDesc desc, long duration) {
     PhoneUtils phoneUtils = PhoneUtils.getPhoneUtils();
     boolean success = true;
     MeasurementResult result =
         new MeasurementResult(phoneUtils.getDeviceInfo().deviceId,
             phoneUtils.getDeviceProperty(), RRCTask.TYPE,
-            System.currentTimeMillis() * 1000, success, this.measurementDesc);
+            System.currentTimeMillis() * 1000, success, this.measurementDesc, duration);
 
     if (desc.runUpperLayerTests) {
       result = desc.getResults(result);
