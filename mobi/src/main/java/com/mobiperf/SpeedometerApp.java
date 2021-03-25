@@ -90,6 +90,7 @@ public class SpeedometerApp extends AppCompatActivity implements TabLayout.OnTab
         @Override
         public void onServiceConnected(ComponentName className, IBinder service) {
             Logger.d("onServiceConnected called");
+            Logger.d("Institution : "+institution);
             // We've bound to LocalService, cast the IBinder and get LocalService
             // instance
             SchedulerBinder binder = (SchedulerBinder) service;
@@ -100,7 +101,6 @@ public class SpeedometerApp extends AppCompatActivity implements TabLayout.OnTab
                 initializeStatusBar();
                 SpeedometerApp.this.sendBroadcast(new UpdateIntent("",
                         UpdateIntent.SCHEDULER_CONNECTED_ACTION));
-                CheckInExecutor.startCollector();
             }
         }
 
@@ -223,6 +223,11 @@ public class SpeedometerApp extends AppCompatActivity implements TabLayout.OnTab
         Security.setProperty("networkaddress.cache.negative.ttl", "0");
 
         prepareUI();
+        if(institution != null)
+            initServiceAndReceiver();
+    }
+
+    private void initServiceAndReceiver(){
         // We only need one instance of the scheduler thread
         Intent intent = new Intent(this, MeasurementScheduler.class);
         this.startService(intent);
@@ -603,11 +608,13 @@ public class SpeedometerApp extends AppCompatActivity implements TabLayout.OnTab
         editor.putString(Config.PREF_KEY_USER_INSTITUTION, selection);
         editor.apply();
         prepareUI();
+        initServiceAndReceiver();
+        if(isMeasurementEnabled())
+            CheckInExecutor.startCollector();
     }
 
     String getSelectedAccount() {
-        String selectedAccount = "Anonymous";
-        return selectedAccount;
+        return "Anonymous";
     }
 
     @Override
