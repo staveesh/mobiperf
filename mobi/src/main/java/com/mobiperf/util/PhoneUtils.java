@@ -834,7 +834,7 @@ public class PhoneUtils {
         }
         Socket tcpSocket = new Socket();
         try {
-            ArrayList<String> hostnameList = MLabNS.Lookup(context, "ndt",
+            ArrayList<String> hostnameList = MLabNS.Lookup(context, "mobiperf",
                     ip_detect_type, "ip");
             // MLabNS returns at least one ip address
             if (hostnameList.isEmpty())
@@ -884,7 +884,7 @@ public class PhoneUtils {
             return DN_UNKNOWN;
         }
         try {
-            ArrayList<String> ipAddressList = MLabNS.Lookup(context, "ndt",
+            ArrayList<String> ipAddressList = MLabNS.Lookup(context, "mobiperf",
                     ip_detect_type, "fqdn");
             String ipAddress;
             // MLabNS returns one fqdn each time
