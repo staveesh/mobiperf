@@ -117,11 +117,17 @@ public interface Config {
 
   /** Constants to access the server **/
   String SERVER_ADDRESS="10.0.0.4";
-  int SERVER_PORT=7000;
+  int SERVER_PORT=7800;
   String SERVER_HOST_ADDRESS = "jchavula-1.cs.uct.ac.za";
   /** Enum for all the permissions that we need*/
   enum PERMISSION_IDS {
     INTERNET, GET_ACCOUNTS, READ_PHONE_STATE, ACCESS_NETWORK_STATE, ACCESS_WIFI_STATE, WAKE_LOCK, RECEIVE_BOOT_COMPLETED, ACCESS_COARSE_LOCATION, ACCESS_FINE_LOCATION
   }
 
+  String STOMP_SERVER_CONNECT_ENDPOINT = "/mobiperf/websocket";
+  String STOMP_SERVER_TASKS_ENDPOINT = "/user/%s/queue/jobs";
+  String STOMP_SERVER_SUMMARY_CHECKIN_ENDPOINT = "/user/%s/queue/timestamp";
+  String STOMP_SERVER_JOB_RESULT_ENDPOINT = "/device/job-result";
+  String STOMP_SERVER_LAST_SUMMARY_CHECKIN_ENDPOINT = "/device/summary-checkin";
+  String STOMP_SERVER_SUMMARY_REPORT_ENDPOINT = "/device/usage-summary";
 }

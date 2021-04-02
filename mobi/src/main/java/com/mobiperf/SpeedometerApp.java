@@ -51,9 +51,26 @@ import android.widget.TextView;
 
 
 import com.mobiperf.MeasurementScheduler.SchedulerBinder;
+import com.mobiperf.util.MeasurementJsonConvertor;
+import com.mobiperf.util.PhoneUtils;
+import com.mobiperf.util.Util;
+
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 import java.security.Security;
+import java.util.ArrayList;
 import java.util.EnumMap;
+import java.util.List;
+import java.util.Vector;
+
+import io.reactivex.disposables.CompositeDisposable;
+import io.reactivex.disposables.Disposable;
+import io.reactivex.schedulers.Schedulers;
+import io.reactivex.android.schedulers.AndroidSchedulers;
+import ua.naiksoftware.stomp.Stomp;
+import ua.naiksoftware.stomp.StompClient;
+import ua.naiksoftware.stomp.dto.StompHeader;
 
 /**
  * The main UI thread that manages different tabs
@@ -82,6 +99,7 @@ public class SpeedometerApp extends AppCompatActivity implements TabLayout.OnTab
     //This is our viewPager
     private ViewPager viewPager;
 
+    private WebSocketConnector webSocketConnector;
 
     /**
      * Defines callbacks for service binding, passed to bindService()
@@ -466,7 +484,7 @@ public class SpeedometerApp extends AppCompatActivity implements TabLayout.OnTab
         super.onStart();
         initPermMap();
         requestPermissions();
-        NetworkSummaryExec.startCollector();
+        NetworkSummaryExec.startThread();
     }
 
     @Override
@@ -609,8 +627,8 @@ public class SpeedometerApp extends AppCompatActivity implements TabLayout.OnTab
         editor.apply();
         prepareUI();
         initServiceAndReceiver();
-        if(isMeasurementEnabled())
-            CheckInExecutor.startCollector();
+        webSocketConnector = new WebSocketConnector(getBaseContext());
+        webSocketConnector.connectWebSocket();
     }
 
     String getSelectedAccount() {
@@ -632,5 +650,9 @@ public class SpeedometerApp extends AppCompatActivity implements TabLayout.OnTab
         return institution != null && (institution.equalsIgnoreCase("DRC")
                 || institution.equalsIgnoreCase("iNethi")
                 || institution.equalsIgnoreCase("Others"));
+    }
+
+    public WebSocketConnector getWebSocketConnector() {
+        return webSocketConnector;
     }
 }

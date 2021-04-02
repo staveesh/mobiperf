@@ -30,6 +30,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.concurrent.TimeoutException;
 
+import com.mobiperf.SpeedometerApp;
 import com.mobiperf.util.MeasurementJsonConvertor;
 import com.mobiperf.util.PhoneUtils;
 import com.mobiperf.util.Util;
@@ -290,7 +291,7 @@ public class TracerouteTask extends MeasurementTask {
             }
             String jsonResultString=MeasurementJsonConvertor.toJsonString(result);
             Logger.i(jsonResultString);
-            Util.sendResult(jsonResultString,DESCRIPTOR);
+            SpeedometerApp.getCurrentApp().getWebSocketConnector().sendMessage(Config.STOMP_SERVER_JOB_RESULT_ENDPOINT, jsonResultString);
             return result;
           } else {
             // Otherwise, we aggregate various hosts at a given hop distance for printout

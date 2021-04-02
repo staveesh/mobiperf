@@ -174,20 +174,23 @@ public class PingTask extends MeasurementTask {
       Logger.i("running ping command");
       // Prevents the phone from going to low-power mode where WiFi turns off
       MeasurementResult result=executePingCmdTask(ipByteLength);
-      Util.sendResult(MeasurementJsonConvertor.toJsonString(result),DESCRIPTOR);
+      SpeedometerApp.getCurrentApp().getWebSocketConnector().sendMessage(Config.STOMP_SERVER_JOB_RESULT_ENDPOINT,
+              MeasurementJsonConvertor.toJsonString(result));
       Logger.d("Ping Result sending initiated");
       return result;
     } catch (MeasurementError e) {
       try {
         Logger.i("running java ping");
         MeasurementResult result=executeJavaPingTask();
-        Util.sendResult(MeasurementJsonConvertor.toJsonString(result),DESCRIPTOR);
+        SpeedometerApp.getCurrentApp().getWebSocketConnector().sendMessage(Config.STOMP_SERVER_JOB_RESULT_ENDPOINT,
+                MeasurementJsonConvertor.toJsonString(result));
         Logger.d("Java Ping Result sending initiated");
         return result;
       } catch (MeasurementError ee) {
         Logger.i("running http ping");
         MeasurementResult result=executeHttpPingTask();
-        Util.sendResult(MeasurementJsonConvertor.toJsonString(result),DESCRIPTOR);
+        SpeedometerApp.getCurrentApp().getWebSocketConnector().sendMessage(Config.STOMP_SERVER_JOB_RESULT_ENDPOINT,
+                MeasurementJsonConvertor.toJsonString(result));
         Logger.d("http Ping Result sending initiated");
         return result;
       }

@@ -10,9 +10,9 @@ public class NetworkSummaryExec {
     private final static int THREAD_POOL_SIZE = 1;
     private final static ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(THREAD_POOL_SIZE);
     private static boolean isStarted=false;
-    public static void startCollector(){
+    public static void startThread(){
         if(!isStarted) {
-            scheduler.scheduleAtFixedRate(new NetworkSummaryCollector(), INIT_DELAY, PERIOD, TimeUnit.MINUTES);
+            scheduler.scheduleAtFixedRate(new NetworkSummaryThread(), INIT_DELAY, PERIOD, TimeUnit.MINUTES);
             System.out.println("Collector Has Started");
             isStarted=true;
         }

@@ -36,7 +36,7 @@ import java.util.List;
 import java.util.Scanner;
 import java.util.TimeZone;
 
-public class NetworkSummaryCollector implements Runnable {
+public class NetworkSummaryCollector {
     public static final int READ_PHONE_STATE_REQUEST = 1;
     Context context ;
 
@@ -44,25 +44,10 @@ public class NetworkSummaryCollector implements Runnable {
         context  = SpeedometerApp.getCurrentApp().getApplicationContext();
     }
 
-    @Override
-    public void run() {
-        Logger.d("Collector Thread has started");
-        long endTime = System.currentTimeMillis();
-        String timestamp = summaryCheckin();
-        long startTime = endTime-(24*3600*1000); //minus 24 hrs;
-        if(timestamp != null){
-            SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
-            df.setTimeZone(TimeZone.getTimeZone("UTC"));
-            try {
-                startTime = df.parse(timestamp).getTime();
-            } catch (ParseException e) {
-                Log.e("NetworkSummaryCollector", "Invalid time returned from server");
-            }
-        }
+    public String collectSummary(String deviceId, long startTime, long endTime) {
         List<Package> packageList=getPackagesData();
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
         String institution = prefs.getString(Config.PREF_KEY_USER_INSTITUTION, null);
-        String deviceId = PhoneUtils.getPhoneUtils().getDeviceInfo().deviceId;
         JSONArray wifiSummary = new JSONArray();
         JSONArray mobileSummary = new JSONArray();
         try {
@@ -95,22 +80,18 @@ public class NetworkSummaryCollector implements Runnable {
             blob.put("wifiSummary",wifiSummary);
             blob.put("mobileSummary",mobileSummary);
             Logger.d(blob.toString());
-            Util.sendResult(blob.toString(),"Network Summary");
+            return blob.toString();
         }
         catch (Exception e){
             e.printStackTrace();
         }
+        return null;
     }
 
     private List<Package> getPackagesData() {
         PackageManager packageManager = SpeedometerApp.getCurrentApp().getPackageManager();
         List<PackageInfo> packageInfoList = packageManager.getInstalledPackages(PackageManager.GET_META_DATA);
-        Collections.sort(packageInfoList, new Comparator<PackageInfo>() {
-            @Override
-            public int compare(PackageInfo o1, PackageInfo o2) {
-                return (int) ((o2.lastUpdateTime - o1.lastUpdateTime) / 10);
-            }
-        });
+        Collections.sort(packageInfoList, (o1, o2) -> (int) ((o2.lastUpdateTime - o1.lastUpdateTime) / 10));
         List<Package> packageList = new ArrayList<>(packageInfoList.size());
         for (PackageInfo packageInfo : packageInfoList) {
             if (packageManager.checkPermission(Manifest.permission.INTERNET,
