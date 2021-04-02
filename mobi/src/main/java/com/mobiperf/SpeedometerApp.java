@@ -119,7 +119,7 @@ public class SpeedometerApp extends AppCompatActivity implements TabLayout.OnTab
             return null;
         }
         executor.shutdown();
-        return "http://" + serverIP + ":" + Config.SERVER_PORT + Config.STOMP_SERVER_CONNECT_ENDPOINT;
+        return "ws://" + serverIP + ":" + Config.SERVER_PORT + Config.STOMP_SERVER_CONNECT_ENDPOINT;
     }
 
     /**
