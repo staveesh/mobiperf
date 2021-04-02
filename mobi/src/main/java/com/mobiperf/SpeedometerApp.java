@@ -63,6 +63,11 @@ import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Vector;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.disposables.Disposable;
@@ -100,6 +105,22 @@ public class SpeedometerApp extends AppCompatActivity implements TabLayout.OnTab
     private ViewPager viewPager;
 
     private WebSocketConnector webSocketConnector;
+    private String targetServerIp;
+
+    private String getWebSocketTarget() {
+        String serverIP = null;
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+        Callable<String> callable = Util::resolveServer;
+        Future<String> future = executor.submit(callable);
+        try {
+            serverIP = future.get();
+        } catch (ExecutionException | InterruptedException e) {
+            Log.e(TAG, "Failed to resolve server");
+            return null;
+        }
+        executor.shutdown();
+        return "http://" + serverIP + ":" + Config.SERVER_PORT + Config.STOMP_SERVER_CONNECT_ENDPOINT;
+    }
 
     /**
      * Defines callbacks for service binding, passed to bindService()
@@ -120,6 +141,7 @@ public class SpeedometerApp extends AppCompatActivity implements TabLayout.OnTab
                 SpeedometerApp.this.sendBroadcast(new UpdateIntent("",
                         UpdateIntent.SCHEDULER_CONNECTED_ACTION));
             }
+            targetServerIp = getWebSocketTarget();
         }
 
         @Override
@@ -628,7 +650,7 @@ public class SpeedometerApp extends AppCompatActivity implements TabLayout.OnTab
         prepareUI();
         initServiceAndReceiver();
         webSocketConnector = new WebSocketConnector(getBaseContext());
-        webSocketConnector.connectWebSocket();
+        webSocketConnector.connectWebSocket(targetServerIp);
     }
 
     String getSelectedAccount() {

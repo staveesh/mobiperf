@@ -17,6 +17,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.TimeZone;
 import java.util.Vector;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 import io.reactivex.CompletableTransformer;
 import io.reactivex.android.schedulers.AndroidSchedulers;
@@ -42,10 +47,6 @@ public class WebSocketConnector {
     public WebSocketConnector(Context context) {
         this.context = context;
         deviceId = PhoneUtils.getPhoneUtils().getDeviceId();
-    }
-
-    private String getWebSocketTarget() {
-        return "ws://" + Util.resolveServer() + ":" + Config.SERVER_PORT + Config.STOMP_SERVER_CONNECT_ENDPOINT;
     }
 
     private List<Disposable> getSubscriptions(){
@@ -107,8 +108,10 @@ public class WebSocketConnector {
         });
     }
 
-    public void connectWebSocket() {
-        mStompClient = Stomp.over(Stomp.ConnectionProvider.OKHTTP, getWebSocketTarget());
+    public void connectWebSocket(String target) {
+        if(target == null)
+            return;
+        mStompClient = Stomp.over(Stomp.ConnectionProvider.OKHTTP, target);
         List<StompHeader> headers = new ArrayList<StompHeader>() {{
             add(new StompHeader("deviceId", deviceId));
         }};
