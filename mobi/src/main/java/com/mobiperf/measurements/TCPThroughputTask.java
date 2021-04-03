@@ -22,6 +22,7 @@ import com.mobiperf.MeasurementError;
 import com.mobiperf.MeasurementResult;
 import com.mobiperf.MeasurementTask;
 import com.mobiperf.SpeedometerApp;
+import com.mobiperf.WebSocketConnector;
 import com.mobiperf.util.MLabNS;
 import com.mobiperf.util.MeasurementJsonConvertor;
 import com.mobiperf.util.PhoneUtils;
@@ -317,7 +318,7 @@ public class TCPThroughputTask extends MeasurementTask {
 //    } catch (InvalidParameterException e) {
 //      throw new MeasurementError(e.getMessage());
 //    }
-    desc.target = Config.SERVER_HOST_ADDRESS;
+    desc.target = Config.SERVER_ADDRESS;
     Logger.i("Setting target to: " + desc.target);
     
     PhoneUtils phoneUtils = PhoneUtils.getPhoneUtils();
@@ -368,7 +369,7 @@ public class TCPThroughputTask extends MeasurementTask {
     result.addResult("total_data_sent_received",this.totalSendSize+this.totalRevSize );
     String resultJsonString=MeasurementJsonConvertor.toJsonString(result);
     Logger.i(resultJsonString);
-    SpeedometerApp.getCurrentApp().getWebSocketConnector().sendMessage(Config.STOMP_SERVER_JOB_RESULT_ENDPOINT, resultJsonString);
+    WebSocketConnector.getInstance().sendMessage(Config.STOMP_SERVER_JOB_RESULT_ENDPOINT, resultJsonString);
     Logger.d("TCP Result sending initiated");
     return result;
   }

@@ -5,7 +5,6 @@ import android.util.Log;
 
 import com.mobiperf.util.MeasurementJsonConvertor;
 import com.mobiperf.util.PhoneUtils;
-import com.mobiperf.util.Util;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -17,11 +16,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.TimeZone;
 import java.util.Vector;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 
 import io.reactivex.CompletableTransformer;
 import io.reactivex.android.schedulers.AndroidSchedulers;
@@ -30,23 +24,38 @@ import io.reactivex.disposables.Disposable;
 import io.reactivex.schedulers.Schedulers;
 import ua.naiksoftware.stomp.Stomp;
 import ua.naiksoftware.stomp.StompClient;
+import ua.naiksoftware.stomp.dto.LifecycleEvent;
 import ua.naiksoftware.stomp.dto.StompHeader;
 
-
-// TODO: Dispose off compositeDisposable appropriately
-// TODO: Handle changes in network connectivity
 public class WebSocketConnector {
 
     private static final String TAG = "WebSocketConnector";
 
-    private final Context context;
-    private String deviceId;
+    private static MeasurementScheduler scheduler;
+    private static Context context;
     private StompClient mStompClient;
     private CompositeDisposable compositeDisposable;
+    private static WebSocketConnector instance;
 
-    public WebSocketConnector(Context context) {
-        this.context = context;
-        deviceId = PhoneUtils.getPhoneUtils().getDeviceId();
+    private WebSocketConnector() {
+    }
+
+    public static WebSocketConnector getInstance() {
+        if (instance == null) {
+            instance = new WebSocketConnector();
+        }
+        return instance;
+    }
+
+    public static synchronized void setContext(Context newContext){
+        assert newContext != null;
+        assert context == null || context == newContext;
+        context = newContext;
+    }
+
+    public static synchronized void setScheduler(MeasurementScheduler schedulerInstance){
+        assert scheduler == null;
+        scheduler = schedulerInstance;
     }
 
     private List<Disposable> getSubscriptions(){
@@ -57,8 +66,8 @@ public class WebSocketConnector {
     }
 
     private Disposable subscribeToNewJobs(){
-        return subscribeToTopic(String.format(Config.STOMP_SERVER_TASKS_ENDPOINT, deviceId), result -> {
-            MeasurementScheduler scheduler = SpeedometerApp.getCurrentApp().getScheduler();
+        String deviceId = PhoneUtils.getPhoneUtils().getDeviceId();
+        return subscribeToTopic(String.format(com.mobiperf.Config.STOMP_SERVER_TASKS_ENDPOINT, deviceId), result -> {
             Vector<MeasurementTask> tasksFromServer = new Vector<>();
             JSONArray jsonArray = null;
             try {
@@ -87,7 +96,8 @@ public class WebSocketConnector {
     }
 
     private Disposable subscribeToMostRecentSummaryTimestamp(){
-        return subscribeToTopic(String.format(Config.STOMP_SERVER_SUMMARY_CHECKIN_ENDPOINT, deviceId), result -> {
+        String deviceId = PhoneUtils.getPhoneUtils().getDeviceId();
+        return subscribeToTopic(String.format(com.mobiperf.Config.STOMP_SERVER_SUMMARY_CHECKIN_ENDPOINT, deviceId), result -> {
             long endTime = System.currentTimeMillis();
             long startTime = endTime-(24*3600*1000); //minus 24 hrs;
             String timestamp = result.getPayload();
@@ -103,7 +113,7 @@ public class WebSocketConnector {
             NetworkSummaryCollector collector = new NetworkSummaryCollector();
             String summary = collector.collectSummary(deviceId, startTime, endTime);
             if(summary != null){
-                sendMessage(Config.STOMP_SERVER_SUMMARY_REPORT_ENDPOINT, summary);
+                sendMessage(com.mobiperf.Config.STOMP_SERVER_SUMMARY_REPORT_ENDPOINT, summary);
             }
         });
     }
@@ -111,6 +121,7 @@ public class WebSocketConnector {
     public void connectWebSocket(String target) {
         if(target == null)
             return;
+        String deviceId = PhoneUtils.getPhoneUtils().getDeviceId();
         mStompClient = Stomp.over(Stomp.ConnectionProvider.OKHTTP, target);
         List<StompHeader> headers = new ArrayList<StompHeader>() {{
             add(new StompHeader("deviceId", deviceId));

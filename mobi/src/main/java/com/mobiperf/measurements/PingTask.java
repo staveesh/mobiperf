@@ -41,6 +41,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.Map;
 
+import com.mobiperf.WebSocketConnector;
 import com.mobiperf.util.MeasurementJsonConvertor;
 import com.mobiperf.util.PhoneUtils;
 import com.mobiperf.util.Util;
@@ -174,7 +175,7 @@ public class PingTask extends MeasurementTask {
       Logger.i("running ping command");
       // Prevents the phone from going to low-power mode where WiFi turns off
       MeasurementResult result=executePingCmdTask(ipByteLength);
-      SpeedometerApp.getCurrentApp().getWebSocketConnector().sendMessage(Config.STOMP_SERVER_JOB_RESULT_ENDPOINT,
+      WebSocketConnector.getInstance().sendMessage(Config.STOMP_SERVER_JOB_RESULT_ENDPOINT,
               MeasurementJsonConvertor.toJsonString(result));
       Logger.d("Ping Result sending initiated");
       return result;
@@ -182,14 +183,14 @@ public class PingTask extends MeasurementTask {
       try {
         Logger.i("running java ping");
         MeasurementResult result=executeJavaPingTask();
-        SpeedometerApp.getCurrentApp().getWebSocketConnector().sendMessage(Config.STOMP_SERVER_JOB_RESULT_ENDPOINT,
+        WebSocketConnector.getInstance().sendMessage(Config.STOMP_SERVER_JOB_RESULT_ENDPOINT,
                 MeasurementJsonConvertor.toJsonString(result));
         Logger.d("Java Ping Result sending initiated");
         return result;
       } catch (MeasurementError ee) {
         Logger.i("running http ping");
         MeasurementResult result=executeHttpPingTask();
-        SpeedometerApp.getCurrentApp().getWebSocketConnector().sendMessage(Config.STOMP_SERVER_JOB_RESULT_ENDPOINT,
+        WebSocketConnector.getInstance().sendMessage(Config.STOMP_SERVER_JOB_RESULT_ENDPOINT,
                 MeasurementJsonConvertor.toJsonString(result));
         Logger.d("http Ping Result sending initiated");
         return result;

@@ -22,6 +22,7 @@ import com.mobiperf.MeasurementError;
 import com.mobiperf.MeasurementResult;
 import com.mobiperf.MeasurementTask;
 import com.mobiperf.SpeedometerApp;
+import com.mobiperf.WebSocketConnector;
 import com.mobiperf.util.MeasurementJsonConvertor;
 import com.mobiperf.util.PhoneUtils;
 import com.mobiperf.util.Util;
@@ -277,7 +278,7 @@ public class HttpTask extends MeasurementTask {
       }
       String resultJsonString=MeasurementJsonConvertor.toJsonString(result);
       Logger.i(resultJsonString);
-      SpeedometerApp.getCurrentApp().getWebSocketConnector().sendMessage(Config.STOMP_SERVER_JOB_RESULT_ENDPOINT, resultJsonString);
+      WebSocketConnector.getInstance().sendMessage(Config.STOMP_SERVER_JOB_RESULT_ENDPOINT, resultJsonString);
       Logger.d("HttpTask Results Sending initiated");
       return result;    
     } catch (MalformedURLException e) {

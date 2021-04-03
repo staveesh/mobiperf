@@ -58,6 +58,7 @@ import com.mobiperf.MeasurementResult;
 import com.mobiperf.MeasurementTask;
 import com.mobiperf.RRCTrafficControl;
 import com.mobiperf.SpeedometerApp;
+import com.mobiperf.WebSocketConnector;
 import com.mobiperf.util.MeasurementJsonConvertor;
 import com.mobiperf.util.PhoneUtils;
 import com.mobiperf.util.Util;
@@ -723,7 +724,7 @@ public class RRCTask extends MeasurementTask {
     RRCDesc desc = runInferenceTests();
     long duration = System.currentTimeMillis() - startTime;
     MeasurementResult result=constructResultStandard(desc, duration);
-    SpeedometerApp.getCurrentApp().getWebSocketConnector().sendMessage(Config.STOMP_SERVER_JOB_RESULT_ENDPOINT,
+    WebSocketConnector.getInstance().sendMessage(Config.STOMP_SERVER_JOB_RESULT_ENDPOINT,
             MeasurementJsonConvertor.toJsonString(result));
     Logger.d("RRCTask Results sending initiated");
     return result;

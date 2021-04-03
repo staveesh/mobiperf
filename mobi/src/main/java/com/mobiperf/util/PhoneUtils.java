@@ -46,6 +46,7 @@ import android.telephony.NeighboringCellInfo;
 import android.telephony.PhoneStateListener;
 import android.telephony.SignalStrength;
 import android.telephony.TelephonyManager;
+import android.util.Log;
 import android.view.Display;
 import android.view.WindowManager;
 import android.webkit.WebView;
@@ -55,8 +56,12 @@ import com.mobiperf.DeviceInfo;
 import com.mobiperf.DeviceProperty;
 import com.mobiperf.Logger;
 import com.mobiperf.MeasurementScheduler;
+import com.mobiperf.MeasurementTask;
+import com.mobiperf.NetworkSummaryCollector;
 import com.mobiperf.R;
+import com.mobiperf.SubscriptionCallbackInterface;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -68,16 +73,31 @@ import java.net.Socket;
 import java.net.SocketAddress;
 import java.net.UnknownHostException;
 import java.security.InvalidParameterException;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
+import java.util.TimeZone;
+import java.util.Vector;
+
+import io.reactivex.CompletableTransformer;
+import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.disposables.CompositeDisposable;
+import io.reactivex.disposables.Disposable;
+import io.reactivex.schedulers.Schedulers;
+import ua.naiksoftware.stomp.Stomp;
+import ua.naiksoftware.stomp.StompClient;
+import ua.naiksoftware.stomp.dto.StompHeader;
 
 
 /**
  * Phone related utilities.
  */
 public class PhoneUtils {
+
+    private static final String TAG = "PhoneUtils";
 
     private static final String ANDROID_STRING = "Android";
     /**
@@ -182,6 +202,10 @@ public class PhoneUtils {
     private int portNum = 6003;
     private int tcpTimeout = 3000;
 
+    private StompClient mStompClient;
+    private CompositeDisposable compositeDisposable;
+    private static MeasurementScheduler scheduler = null;
+
     @SuppressLint("MissingPermission")
     protected PhoneUtils(Context context) {
         this.context = context;
@@ -212,6 +236,10 @@ public class PhoneUtils {
         assert globalContext == null || globalContext == newGlobalContext;
 
         globalContext = newGlobalContext;
+    }
+
+    public static synchronized void setScheduler(MeasurementScheduler schedulerInstance) {
+        scheduler = schedulerInstance;
     }
 
     public static synchronized void releaseGlobalContext() {
@@ -430,6 +458,8 @@ public class PhoneUtils {
             return null;
         }
     }
+
+
 
     /**
      * Lazily initializes the location manager.

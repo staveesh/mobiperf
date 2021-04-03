@@ -103,8 +103,6 @@ public class SpeedometerApp extends AppCompatActivity implements TabLayout.OnTab
 
     //This is our viewPager
     private ViewPager viewPager;
-
-    private WebSocketConnector webSocketConnector;
     private String targetServerIp;
 
     private String getWebSocketTarget() {
@@ -649,8 +647,10 @@ public class SpeedometerApp extends AppCompatActivity implements TabLayout.OnTab
         editor.apply();
         prepareUI();
         initServiceAndReceiver();
-        webSocketConnector = new WebSocketConnector(getBaseContext());
-        webSocketConnector.connectWebSocket(targetServerIp);
+        WebSocketConnector webSocketConnector = WebSocketConnector.getInstance();
+        WebSocketConnector.setContext(getBaseContext());
+        WebSocketConnector.setScheduler(getScheduler());
+        webSocketConnector.connectWebSocket(getWebSocketTarget());
     }
 
     String getSelectedAccount() {
@@ -672,9 +672,5 @@ public class SpeedometerApp extends AppCompatActivity implements TabLayout.OnTab
         return institution != null && (institution.equalsIgnoreCase("DRC")
                 || institution.equalsIgnoreCase("iNethi")
                 || institution.equalsIgnoreCase("Others"));
-    }
-
-    public WebSocketConnector getWebSocketConnector() {
-        return webSocketConnector;
     }
 }

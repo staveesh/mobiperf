@@ -42,13 +42,13 @@ public abstract class MeasurementTask implements Callable<MeasurementResult>, Co
   public static final int INVALID_PRIORITY = Integer.MAX_VALUE;
   public static final int INFINITE_COUNT = -1;
   
-  protected MeasurementDesc measurementDesc;
-  protected Context parent;
+  public MeasurementDesc measurementDesc;
+  public Context parent;
   /* When updating the 'progress' field, ensure that it's within the range between 0 and
    * Config.MAX_PROGRESS_BAR_VALUE, inclusive. Values outside this range have special meanings and
    * can trigger unexpected results.
    */
-  protected int progress;
+  public int progress;
   private static HashMap<String, Class> measurementTypes;
   // Maps between the type of task and its readable name
   private static HashMap<String, String> measurementDescToType;
@@ -124,7 +124,7 @@ public abstract class MeasurementTask implements Callable<MeasurementResult>, Co
    * @param measurementDesc
    * @param parent
    */
-  protected MeasurementTask(MeasurementDesc measurementDesc, Context parent) {
+  public MeasurementTask(MeasurementDesc measurementDesc, Context parent) {
     super();
     this.measurementDesc = measurementDesc;
     this.parent = parent;

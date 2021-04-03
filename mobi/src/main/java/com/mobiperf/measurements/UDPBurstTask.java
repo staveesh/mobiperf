@@ -21,6 +21,7 @@ import com.mobiperf.MeasurementError;
 import com.mobiperf.MeasurementResult;
 import com.mobiperf.MeasurementTask;
 import com.mobiperf.SpeedometerApp;
+import com.mobiperf.WebSocketConnector;
 import com.mobiperf.util.MLabNS;
 import com.mobiperf.util.MeasurementJsonConvertor;
 import com.mobiperf.util.PhoneUtils;
@@ -684,7 +685,7 @@ public class UDPBurstTask extends MeasurementTask {
 //          +
 //          " for UDPBurstTask");
 //    }
-    desc.target = Config.SERVER_HOST_ADDRESS;
+    desc.target = Config.SERVER_ADDRESS;
     Logger.i("Setting target to: " + desc.target);
     
     PhoneUtils phoneUtils = PhoneUtils.getPhoneUtils();
@@ -728,7 +729,7 @@ public class UDPBurstTask extends MeasurementTask {
     result.addResult("loss_ratio", 1.0 - response);  
     result.addResult("out_of_order_ratio", udpResult.outOfOrderRatio);
     result.addResult("jitter", udpResult.jitter);
-    SpeedometerApp.getCurrentApp().getWebSocketConnector().sendMessage(Config.STOMP_SERVER_JOB_RESULT_ENDPOINT,
+    WebSocketConnector.getInstance().sendMessage(Config.STOMP_SERVER_JOB_RESULT_ENDPOINT,
             MeasurementJsonConvertor.toJsonString(result));
     Logger.d("UDP Burst results sending initiated");
     return result;

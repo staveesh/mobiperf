@@ -40,7 +40,7 @@ public class NetworkSummaryCollector {
     public static final int READ_PHONE_STATE_REQUEST = 1;
     Context context ;
 
-    NetworkSummaryCollector(){
+    public NetworkSummaryCollector(){
         context  = SpeedometerApp.getCurrentApp().getApplicationContext();
     }
 

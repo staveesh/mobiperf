@@ -480,9 +480,6 @@ public class MeasurementScheduler extends Service {
     Logger.d("Service onDestroy called");
     super.onDestroy();
     cleanUp();
-    WebSocketConnector webSocketConnector = SpeedometerApp.getCurrentApp().getWebSocketConnector();
-    if(webSocketConnector != null && webSocketConnector.isConnected())
-      webSocketConnector.disconnect();
   }
 
   /**
