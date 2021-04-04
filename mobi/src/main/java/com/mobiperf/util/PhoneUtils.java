@@ -20,6 +20,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.Bitmap.Config;
@@ -40,6 +41,7 @@ import android.os.Bundle;
 import android.os.Looper;
 import android.os.PowerManager;
 import android.os.PowerManager.WakeLock;
+import android.preference.PreferenceManager;
 import android.provider.Settings.Secure;
 import android.support.v4.app.ActivityCompat;
 import android.telephony.NeighboringCellInfo;
@@ -60,6 +62,7 @@ import com.mobiperf.MeasurementTask;
 import com.mobiperf.NetworkSummaryCollector;
 import com.mobiperf.R;
 import com.mobiperf.SubscriptionCallbackInterface;
+import com.mobiperf.WebSocketConnector;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -791,6 +794,13 @@ public class PhoneUtils {
         @Override
         public void onReceive(Context context, Intent intent) {
             updateConnectivityInfo();
+            if ("android.net.conn.CONNECTIVITY_CHANGE".equals(intent.getAction())) {
+                WebSocketConnector connector = WebSocketConnector.getInstance();
+                SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
+                String target = prefs.getString(com.mobiperf.Config.PREF_KEY_RESOLVED_TARGET, null);
+                if(target != null && !connector.isConnected())
+                    connector.connectWebSocket(target);
+            }
 
         }
     }

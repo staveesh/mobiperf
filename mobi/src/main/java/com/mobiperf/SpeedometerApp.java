@@ -641,8 +641,10 @@ public class SpeedometerApp extends AppCompatActivity implements TabLayout.OnTab
 
     public void institutionSelected(String selection){
         institution = selection;
+        String target = getWebSocketTarget();
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getBaseContext());
         SharedPreferences.Editor editor = prefs.edit();
+        editor.putString(Config.PREF_KEY_RESOLVED_TARGET, target);
         editor.putString(Config.PREF_KEY_USER_INSTITUTION, selection);
         editor.apply();
         prepareUI();
@@ -650,7 +652,7 @@ public class SpeedometerApp extends AppCompatActivity implements TabLayout.OnTab
         WebSocketConnector webSocketConnector = WebSocketConnector.getInstance();
         WebSocketConnector.setContext(getBaseContext());
         WebSocketConnector.setScheduler(getScheduler());
-        webSocketConnector.connectWebSocket(getWebSocketTarget());
+        webSocketConnector.connectWebSocket(target);
     }
 
     String getSelectedAccount() {
