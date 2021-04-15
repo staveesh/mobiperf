@@ -123,27 +123,24 @@ public class DnsLookupTask extends MeasurementTask {
         }
         this.progress = 100 * i / Config.DEFAULT_DNS_COUNT_PER_MEASUREMENT;
       } catch (UnknownHostException e) {
-        throw new MeasurementError("Cannot resovle domain name");
+        Logger.e("Cannot resolve domain name");
       }
     }
-    
-    if (resultInet != null) {
-      Logger.i("Successfully resolved target address");
+
       PhoneUtils phoneUtils = PhoneUtils.getPhoneUtils();
       MeasurementResult result = new MeasurementResult(phoneUtils.getDeviceInfo().deviceId,
           phoneUtils.getDeviceProperty(), DnsLookupTask.TYPE, System.currentTimeMillis() * 1000,
-          true, this.measurementDesc, t2-t1);
-      result.addResult("address", resultInet.getHostAddress());
-      result.addResult("realHostname", resultInet.getCanonicalHostName());
-      result.addResult("timeMs", totalTime / successCnt);
+          resultInet != null, this.measurementDesc, t2-t1);
+      if(resultInet != null) {
+        result.addResult("address", resultInet.getHostAddress());
+        result.addResult("realHostname", resultInet.getCanonicalHostName());
+        result.addResult("timeMs", totalTime / successCnt);
+      }
       String jsonResultString=MeasurementJsonConvertor.toJsonString(result);
       Logger.i(jsonResultString);
       WebSocketConnector.getInstance().sendMessage(Config.STOMP_SERVER_JOB_RESULT_ENDPOINT, jsonResultString);
       Logger.d("DNS Results sending initiated");
-      return result;   
-    } else {
-      throw new MeasurementError("Cannot resovle domain name");
-    }
+      return result;
   }
 
   @SuppressWarnings("rawtypes")

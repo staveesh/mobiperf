@@ -454,7 +454,7 @@ public class ResourceCapManager {
           throw e;
         } catch (Exception e) {
           Logger.e("Got exception running task", e);
-          MeasurementError err = new MeasurementError("Got exception running task", e);
+          MeasurementError err = new MeasurementError(e.getMessage(), e);
           broadcastMeasurementEnd(null, err);
           throw err;
         }

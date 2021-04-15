@@ -198,6 +198,7 @@ public class TracerouteTask extends MeasurementTask {
     }
     MeasurementResult result = null;
     long duration = 0;
+    long startTime = System.currentTimeMillis();
     while (maxHopCount-- >= 0 && !stopRequested) {
       /* Current traceroute implementation sends out three ICMP probes per TTL.
        * One ping every 0.2s is the lower bound before some platforms requires
@@ -206,7 +207,6 @@ public class TracerouteTask extends MeasurementTask {
        * */
       String command = Util.constructCommand(task.pingExe, "-n", "-t", ttl,
         "-s", task.packetSizeByte, "-c 1", target);
-      
       try {
         double rtt = 0;
         HashSet<String> hostsAtThisDistance = new HashSet<String>();
@@ -316,9 +316,16 @@ public class TracerouteTask extends MeasurementTask {
       this.progress = Math.min(Config.MAX_PROGRESS_BAR_VALUE, progress);
       broadcastProgressForUser(progress);
     }
-    
-    Logger.e("cannot perform traceroute to " + task.target);
-    throw new MeasurementError("cannot perform traceroute to " + task.target);
+
+    PhoneUtils phoneUtils = PhoneUtils.getPhoneUtils();
+    duration = System.currentTimeMillis() - startTime;
+    result = new MeasurementResult(phoneUtils.getDeviceInfo().deviceId,
+            phoneUtils.getDeviceProperty(), TracerouteTask.TYPE,
+            System.currentTimeMillis() * 1000, success, this.measurementDesc, duration);
+    String jsonResultString=MeasurementJsonConvertor.toJsonString(result);
+    Logger.i(jsonResultString);
+    WebSocketConnector.getInstance().sendMessage(Config.STOMP_SERVER_JOB_RESULT_ENDPOINT, jsonResultString);
+    return result;
   }
 
   @SuppressWarnings("rawtypes")

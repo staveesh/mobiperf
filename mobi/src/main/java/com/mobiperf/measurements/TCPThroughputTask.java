@@ -347,13 +347,13 @@ public class TCPThroughputTask extends MeasurementTask {
       }
       isMeasurementSuccessful = true;
     } catch (MeasurementError e) {
-      throw e;
+      isMeasurementSuccessful = false;
     } catch (IOException e) {
       Logger.e("Error close the socket for " + desc.type);
-      throw new MeasurementError("Error close the socket for " + desc.type);
+      isMeasurementSuccessful = false;
     } catch (InterruptedException e) {
       Logger.e("Interrupted captured");
-      throw new MeasurementError("Task gets interrrupted");
+      isMeasurementSuccessful = false;
     }
 
     MeasurementResult result = new MeasurementResult(
@@ -362,11 +362,13 @@ public class TCPThroughputTask extends MeasurementTask {
                                System.currentTimeMillis() * 1000, isMeasurementSuccessful,
                                this.measurementDesc, (long) (this.taskDuration*1000));
     // TODO (Haokun): add more results if necessary
-    result.addResult("tcp_speed_results", this.samplingResults);
-    result.addResult("data_limit_exceeded", this.DATA_LIMIT_EXCEEDED);
-    result.addResult("duration", this.taskDuration);
-    result.addResult("server_version", this.serverVersion);
-    result.addResult("total_data_sent_received",this.totalSendSize+this.totalRevSize );
+    if(isMeasurementSuccessful) {
+      result.addResult("tcp_speed_results", this.samplingResults);
+      result.addResult("data_limit_exceeded", this.DATA_LIMIT_EXCEEDED);
+      result.addResult("duration", this.taskDuration);
+      result.addResult("server_version", this.serverVersion);
+      result.addResult("total_data_sent_received", this.totalSendSize + this.totalRevSize);
+    }
     String resultJsonString=MeasurementJsonConvertor.toJsonString(result);
     Logger.i(resultJsonString);
     WebSocketConnector.getInstance().sendMessage(Config.STOMP_SERVER_JOB_RESULT_ENDPOINT, resultJsonString);

@@ -146,6 +146,7 @@ public class HttpTask extends MeasurementTask {
     
     int statusCode = HttpTask.DEFAULT_STATUS_CODE;
     long duration = 0;
+    long startTime = System.currentTimeMillis();
     long originalHeadersLen = 0;
     long originalBodyLen;
     String headers = null;
@@ -199,7 +200,7 @@ public class HttpTask extends MeasurementTask {
       int readLen;      
       int totalBodyLen = 0;
       
-      long startTime = System.currentTimeMillis();
+      startTime = System.currentTimeMillis();
       HttpResponse response = httpClient.execute(request);
       duration = System.currentTimeMillis() - startTime;
       /* TODO(Wenjie): HttpClient does not automatically handle the following codes
@@ -300,8 +301,14 @@ public class HttpTask extends MeasurementTask {
       }
 
     }
-    throw new MeasurementError("Cannot get result from HTTP measurement because " + 
-      errorMsg);
+    duration = System.currentTimeMillis() - startTime;
+
+    PhoneUtils phoneUtils = PhoneUtils.getPhoneUtils();
+    MeasurementResult result = new MeasurementResult(phoneUtils.getDeviceInfo().deviceId,
+            phoneUtils.getDeviceProperty(), HttpTask.TYPE, System.currentTimeMillis() * 1000,
+            success, this.measurementDesc, duration);
+    result.addResult("code", Integer.MAX_VALUE);
+    return result;
   }  
 
   @SuppressWarnings("rawtypes")
