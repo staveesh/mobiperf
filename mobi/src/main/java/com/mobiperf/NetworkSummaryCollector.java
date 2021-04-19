@@ -1,6 +1,7 @@
 package com.mobiperf;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.app.usage.NetworkStatsManager;
 import android.content.Context;
@@ -10,7 +11,12 @@ import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.net.ConnectivityManager;
 import android.os.Build;
+import android.support.annotation.RequiresApi;
+import android.support.v4.app.ActivityCompat;
 import android.support.v7.preference.PreferenceManager;
+import android.telephony.SubscriptionInfo;
+import android.telephony.SubscriptionManager;
+import android.telephony.TelephonyManager;
 import android.util.Log;
 
 import com.mobiperf.util.MeasurementJsonConvertor;
@@ -32,16 +38,18 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Scanner;
 import java.util.TimeZone;
 
 public class NetworkSummaryCollector implements Runnable {
     public static final int READ_PHONE_STATE_REQUEST = 1;
-    Context context ;
+    Context context;
 
-    NetworkSummaryCollector(){
-        context  = SpeedometerApp.getCurrentApp().getApplicationContext();
+    NetworkSummaryCollector() {
+        context = SpeedometerApp.getCurrentApp().getApplicationContext();
     }
 
     @Override
@@ -49,8 +57,8 @@ public class NetworkSummaryCollector implements Runnable {
         Logger.d("Collector Thread has started");
         long endTime = System.currentTimeMillis();
         String timestamp = summaryCheckin();
-        long startTime = endTime-(24*3600*1000); //minus 24 hrs;
-        if(timestamp != null){
+        long startTime = endTime - (24 * 3600 * 1000); //minus 24 hrs;
+        if (timestamp != null) {
             SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
             df.setTimeZone(TimeZone.getTimeZone("UTC"));
             try {
@@ -59,7 +67,7 @@ public class NetworkSummaryCollector implements Runnable {
                 Log.e("NetworkSummaryCollector", "Invalid time returned from server");
             }
         }
-        List<Package> packageList=getPackagesData();
+        List<Package> packageList = getPackagesData();
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
         String institution = prefs.getString(Config.PREF_KEY_USER_INSTITUTION, null);
         String deviceId = PhoneUtils.getPhoneUtils().getDeviceInfo().deviceId;
@@ -68,36 +76,51 @@ public class NetworkSummaryCollector implements Runnable {
         try {
             for (Package pckg : packageList) {
                 String packageName = pckg.getPackageName();
-                DataPayload wifiPayload = getBytes(packageName,startTime,endTime, ConnectivityManager.TYPE_WIFI);
-                DataPayload mobilePayload = getBytes(packageName,startTime,endTime, ConnectivityManager.TYPE_MOBILE);
-                //build json here
-                if(!wifiPayload.isEmptyPayload()) {
-                    JSONObject appData = new JSONObject();
-                    appData.put("name", packageName);
-                    appData.put("rx",wifiPayload.getRx());
-                    appData.put("tx",wifiPayload.getTx());
-                    wifiSummary.put(appData);
+                DataPayload wifiPayload = getWifiBytes(packageName, startTime, endTime);
+                SubscriptionManager subscriptionManager = null;
+                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP_MR1) {
+                    subscriptionManager = SubscriptionManager.from(context);
+                    if (ActivityCompat.checkSelfPermission(context, Manifest.permission.READ_PHONE_STATE) == PackageManager.PERMISSION_GRANTED) {
+                        List<SubscriptionInfo> activeSubscriptionInfoList = subscriptionManager.getActiveSubscriptionInfoList();
+                        TelephonyManager manager = (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
+                        for (SubscriptionInfo subscriptionInfo : activeSubscriptionInfoList) {
+                            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
+                                TelephonyManager manager1 = manager.createForSubscriptionId(subscriptionInfo.getSubscriptionId());
+                                String operatorName = manager1.getNetworkOperatorName();
+                                String subscriberId = manager1.getSubscriberId(); //use this subscriberId to do NetworkStatsManager stuff
+                                DataPayload mobileSimPayload = getMobileBytes(packageName, startTime, endTime,subscriberId);
+                                if(!mobileSimPayload.isEmptyPayload()){
+                                    JSONObject appData = new JSONObject();
+                                    appData.put("operatorName", operatorName);
+                                    appData.put("name", packageName);
+                                    appData.put("rx", mobileSimPayload.getRx());
+                                    appData.put("tx", mobileSimPayload.getTx());
+                                    mobileSummary.put(appData);
+                                }
+                            }
+                        }
+                    }
                 }
-                if(!mobilePayload.isEmptyPayload()) {
+                if (!wifiPayload.isEmptyPayload()) {
                     JSONObject appData = new JSONObject();
+                    appData.put("operatorName", "WIFI");
                     appData.put("name", packageName);
-                    appData.put("rx",mobilePayload.getRx());
-                    appData.put("tx",mobilePayload.getTx());
-                    mobileSummary.put(appData);
+                    appData.put("rx", wifiPayload.getRx());
+                    appData.put("tx", wifiPayload.getTx());
+                    wifiSummary.put(appData);
                 }
             }
             JSONObject blob = new JSONObject();
-            blob.put("requestType","summary");
+            blob.put("requestType", "summary");
             blob.put("institution", institution);
             blob.put("deviceId", deviceId);
             blob.put("startTime", startTime);
-            blob.put("endTime",endTime);
-            blob.put("wifiSummary",wifiSummary);
-            blob.put("mobileSummary",mobileSummary);
+            blob.put("endTime", endTime);
+            blob.put("wifiSummary", wifiSummary);
+            blob.put("mobileSummary", mobileSummary);
             Logger.d(blob.toString());
-            Util.sendResult(blob.toString(),"Network Summary");
-        }
-        catch (Exception e){
+            Util.sendResult(blob.toString(), "Network Summary");
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
@@ -138,21 +161,38 @@ public class NetworkSummaryCollector implements Runnable {
         return packageList;
     }
 
-    private DataPayload getBytes(String packageName,long start,long end, int type) {
+    private DataPayload getWifiBytes(String packageName, long start, long end) {
         int uid = PackageManagerHelper.getPackageUid(context, packageName);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             NetworkStatsManager networkStatsManager = (NetworkStatsManager) context.getSystemService(Context.NETWORK_STATS_SERVICE);
             NetworkStatsHelper networkStatsHelper = new NetworkStatsHelper(networkStatsManager, uid);
-            return fillNetworkStatsPackage(networkStatsHelper,start,end, type);
+            return fillNetworkStatsPackageWifi(networkStatsHelper, start, end);
+        }
+        return null;
+    }
+
+    private DataPayload getMobileBytes(String packageName, long start, long end, String subscriberId) {
+        int uid = PackageManagerHelper.getPackageUid(context, packageName);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            NetworkStatsManager networkStatsManager = (NetworkStatsManager) context.getSystemService(Context.NETWORK_STATS_SERVICE);
+            NetworkStatsHelper networkStatsHelper = new NetworkStatsHelper(networkStatsManager, uid);
+            return fillNetworkStatsPackageMobile(networkStatsHelper, start, end, subscriberId);
         }
         return null;
     }
 
     @TargetApi(Build.VERSION_CODES.M)
-    private DataPayload fillNetworkStatsPackage(NetworkStatsHelper networkStatsHelper,long start,long end, int type) {
-        long mobileWifiRx = networkStatsHelper.getPackageRxBytesWifi(start,end, type);
-        long mobileWifiTx = networkStatsHelper.getPackageTxBytesWifi(start,end, type);
-        return new DataPayload(mobileWifiRx,mobileWifiTx);
+    private DataPayload fillNetworkStatsPackageWifi(NetworkStatsHelper networkStatsHelper, long start, long end) {
+        long mobileWifiRx = networkStatsHelper.getPackageRxBytesWifi(start, end);
+        long mobileWifiTx = networkStatsHelper.getPackageTxBytesWifi(start, end);
+        return new DataPayload(mobileWifiRx, mobileWifiTx);
+    }
+
+    @TargetApi(Build.VERSION_CODES.M)
+    private DataPayload fillNetworkStatsPackageMobile(NetworkStatsHelper networkStatsHelper, long start, long end, String subscriberId) {
+        long mobileWifiRx = networkStatsHelper.getPackageRxBytesMobile(start, end, subscriberId);
+        long mobileWifiTx = networkStatsHelper.getPackageTxBytesMobile(start, end, subscriberId);
+        return new DataPayload(mobileWifiRx, mobileWifiTx);
     }
 
     private String summaryCheckin() {
@@ -181,10 +221,27 @@ public class NetworkSummaryCollector implements Runnable {
             Logger.d("the result of summary checkin is \n" + result);
             serverSocket.close();
             return result;
-        } catch (IOException e){
+        } catch (IOException e) {
             Log.e("NetworkSummaryCollector", "summaryCheckin: ", e);
         }
         return null;
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP_MR1)
+    @SuppressLint("MissingPermission")
+    public List<String> subscriberIdsOfMultipleSim(){
+        SubscriptionManager subscriptionManager = SubscriptionManager.from(context);
+        List<String> result = new ArrayList<>();
+        List<SubscriptionInfo> activeSubscriptionInfoList = subscriptionManager.getActiveSubscriptionInfoList();
+        TelephonyManager manager = (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
+        for (SubscriptionInfo subscriptionInfo : activeSubscriptionInfoList) {
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
+                TelephonyManager manager1=manager.createForSubscriptionId(subscriptionInfo.getSubscriptionId());
+                String subscriberId=manager1.getSubscriberId();
+                result.add(subscriberId);
+            }
+        }
+        return result;
     }
 
 }

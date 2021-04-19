@@ -5,6 +5,7 @@ import android.app.usage.NetworkStats;
 import android.app.usage.NetworkStatsManager;
 import android.net.ConnectivityManager;
 import android.os.Build;
+import android.telephony.SubscriptionManager;
 
 import java.util.Date;
 
@@ -31,10 +32,10 @@ public class NetworkStatsHelper {
         packageUid=uid;
     }
 
-    public long getPackageRxBytesWifi(long startTime,long endTime, int type) {
+    public long getPackageRxBytesWifi(long startTime,long endTime) {
         NetworkStats networkStats = null;
         networkStats = networkStatsManager.queryDetailsForUid(
-                type,
+                ConnectivityManager.TYPE_WIFI,
                 "",
                  startTime,
                 endTime,
@@ -50,10 +51,10 @@ public class NetworkStatsHelper {
         return rxBytes;
     }
 
-    public long getPackageTxBytesWifi(long startTime,long endTime, int type) {
+    public long getPackageTxBytesWifi(long startTime,long endTime) {
         NetworkStats networkStats = null;
         networkStats = networkStatsManager.queryDetailsForUid(
-                type,
+                ConnectivityManager.TYPE_WIFI,
                 "",
                 startTime,
                 endTime,
@@ -67,6 +68,44 @@ public class NetworkStatsHelper {
         }
         networkStats.close();
         return txBytes;
+    }
+
+    public long getPackageRxBytesMobile(long startTime, long endTime, String subscriberId){
+        NetworkStats networkStats = null;
+        networkStats = networkStatsManager.queryDetailsForUid(
+                ConnectivityManager.TYPE_MOBILE,
+                subscriberId,
+                startTime,
+                endTime,
+                packageUid
+        );
+        long rxBytes = 0L;
+        NetworkStats.Bucket bucket = new NetworkStats.Bucket();
+        while (networkStats.hasNextBucket()) {
+            networkStats.getNextBucket(bucket);
+            rxBytes += bucket.getRxBytes();
+        }
+        networkStats.close();
+        return rxBytes;
+    }
+
+    public long getPackageTxBytesMobile(long startTime, long endTime, String subscriberId){
+        NetworkStats networkStats = null;
+        networkStats = networkStatsManager.queryDetailsForUid(
+                ConnectivityManager.TYPE_MOBILE,
+                subscriberId,
+                startTime,
+                endTime,
+                packageUid
+        );
+        long rxBytes = 0L;
+        NetworkStats.Bucket bucket = new NetworkStats.Bucket();
+        while (networkStats.hasNextBucket()) {
+            networkStats.getNextBucket(bucket);
+            rxBytes += bucket.getTxBytes();
+        }
+        networkStats.close();
+        return rxBytes;
     }
 
 }
