@@ -11,30 +11,17 @@ import android.content.pm.PackageManager;
 import android.net.ConnectivityManager;
 import android.os.Build;
 import android.support.v7.preference.PreferenceManager;
-import android.util.Log;
 
-import com.mobiperf.util.MeasurementJsonConvertor;
-import com.mobiperf.util.PhoneUtils;
-import com.mobiperf.util.Util;
 import com.mobiperf.util.model.Package;
 import com.mobiperf.util.utils.NetworkStatsHelper;
 import com.mobiperf.util.utils.PackageManagerHelper;
 
 import org.json.JSONArray;
-import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.net.Socket;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
-import java.util.Scanner;
-import java.util.TimeZone;
 
 public class NetworkSummaryCollector {
     public static final int READ_PHONE_STATE_REQUEST = 1;
@@ -134,38 +121,6 @@ public class NetworkSummaryCollector {
         long mobileWifiRx = networkStatsHelper.getPackageRxBytesWifi(start,end, type);
         long mobileWifiTx = networkStatsHelper.getPackageTxBytesWifi(start,end, type);
         return new DataPayload(mobileWifiRx,mobileWifiTx);
-    }
-
-    private String summaryCheckin() {
-        try {
-            Socket serverSocket = new Socket(Util.resolveServer(), Config.SERVER_PORT);
-            Logger.d("Server Socket Connection Established");
-            PrintWriter out = new PrintWriter(serverSocket.getOutputStream());
-            JSONObject summaryCheckInRequest = new JSONObject();
-            try {
-                summaryCheckInRequest.put("requestType", "SUMMARY-CHECKIN");
-                summaryCheckInRequest.put("deviceId", PhoneUtils.getPhoneUtils().getDeviceId());
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
-            out.println(summaryCheckInRequest.toString());
-            out.flush();
-            Logger.d(summaryCheckInRequest.toString());
-            Scanner in = new Scanner(serverSocket.getInputStream());
-            String result = "";
-            while (true) {
-                if (in.hasNextLine()) {
-                    result = in.nextLine();
-                    break;
-                }
-            }
-            Logger.d("the result of summary checkin is \n" + result);
-            serverSocket.close();
-            return result;
-        } catch (IOException e){
-            Log.e("NetworkSummaryCollector", "summaryCheckin: ", e);
-        }
-        return null;
     }
 
 }

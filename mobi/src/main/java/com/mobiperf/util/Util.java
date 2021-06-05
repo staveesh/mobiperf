@@ -26,7 +26,10 @@ import android.content.pm.PackageManager.NameNotFoundException;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.nio.charset.StandardCharsets;
 import java.security.InvalidParameterException;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Map;
@@ -233,5 +236,23 @@ public class Util {
       e.printStackTrace();
     }
     return null;
+  }
+
+  public static String hashTimeStamp() {
+    MessageDigest md = null;
+    try {
+      md = MessageDigest.getInstance("MD5");
+    } catch (NoSuchAlgorithmException e) {
+      e.printStackTrace();
+      return "";
+    }
+    String timestamp = new Date().toString();
+    byte[] hashInBytes = md.digest(timestamp.getBytes(StandardCharsets.UTF_8));
+
+    StringBuilder sb = new StringBuilder();
+    for (byte b : hashInBytes) {
+      sb.append(String.format("%02x", b));
+    }
+    return sb.toString();
   }
 }
