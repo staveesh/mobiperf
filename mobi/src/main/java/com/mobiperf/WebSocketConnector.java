@@ -5,6 +5,7 @@ import android.content.SharedPreferences;
 import android.util.Log;
 
 import com.mobiperf.util.MeasurementJsonConvertor;
+import com.mobiperf.util.PhoneUtils;
 import com.mobiperf.util.Util;
 
 import org.json.JSONArray;
@@ -66,21 +67,8 @@ public class WebSocketConnector {
         }};
     }
 
-    public static String getDeviceId() {
-        String uuid;
-        SharedPreferences uniqueIdPref = context.getSharedPreferences(Config.PREF_KEY_UNIQUE_ID, Context.MODE_PRIVATE);
-        uuid = uniqueIdPref.getString(Config.PREF_KEY_UNIQUE_ID, null);
-        if(uuid == null) {
-            uuid = UUID.randomUUID().toString()+"_"+ Util.hashTimeStamp();
-            SharedPreferences.Editor edit = uniqueIdPref.edit();
-            edit.putString(Config.PREF_KEY_UNIQUE_ID, uuid);
-            edit.apply();
-        }
-        return uuid;
-    }
-
     private Disposable subscribeToNewJobs(){
-        String deviceId = getDeviceId();
+        String deviceId = PhoneUtils.getPhoneUtils().getDeviceId();
         return subscribeToTopic(String.format(com.mobiperf.Config.STOMP_SERVER_TASKS_ENDPOINT, deviceId), result -> {
             Vector<MeasurementTask> tasksFromServer = new Vector<>();
             JSONArray jsonArray = null;
@@ -110,7 +98,7 @@ public class WebSocketConnector {
     }
 
     private Disposable subscribeToMostRecentSummaryTimestamp(){
-        String deviceId = getDeviceId();
+        String deviceId = PhoneUtils.getPhoneUtils().getDeviceId();
         return subscribeToTopic(String.format(com.mobiperf.Config.STOMP_SERVER_SUMMARY_CHECKIN_ENDPOINT, deviceId), result -> {
             long endTime = System.currentTimeMillis();
             long startTime = endTime-(24*3600*1000); //minus 24 hrs;
@@ -135,7 +123,7 @@ public class WebSocketConnector {
     public void connectWebSocket(String target) {
         if(target == null)
             return;
-        String deviceId = getDeviceId();
+        String deviceId = PhoneUtils.getPhoneUtils().getDeviceId();
         mStompClient = Stomp.over(Stomp.ConnectionProvider.OKHTTP, target);
         List<StompHeader> headers = new ArrayList<StompHeader>() {{
             add(new StompHeader("deviceId", deviceId));

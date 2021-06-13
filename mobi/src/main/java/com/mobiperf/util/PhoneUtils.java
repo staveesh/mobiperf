@@ -83,6 +83,7 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.TimeZone;
+import java.util.UUID;
 import java.util.Vector;
 
 import io.reactivex.CompletableTransformer;
@@ -814,18 +815,17 @@ public class PhoneUtils {
                 Build.VERSION.RELEASE, Build.VERSION.SDK_INT);
     }
 
-    @SuppressLint("MissingPermission")
     public String getDeviceId() {
-        String deviceId = null;
-        if (ActivityCompat.checkSelfPermission(context,
-                Manifest.permission.READ_PHONE_STATE) == PackageManager.PERMISSION_GRANTED)
-            deviceId = telephonyManager.getDeviceId();  // This ID is permanent to a physical phone.
-        // "generic" means the emulator.
-        if (deviceId == null || Build.DEVICE.equals("generic")) {
-            // This ID changes on OS reinstall/factory reset.
-            deviceId = Secure.getString(context.getContentResolver(), Secure.ANDROID_ID);
+        String uuid;
+        SharedPreferences uniqueIdPref = context.getSharedPreferences(com.mobiperf.Config.PREF_KEY_UNIQUE_ID, Context.MODE_PRIVATE);
+        uuid = uniqueIdPref.getString(com.mobiperf.Config.PREF_KEY_UNIQUE_ID, null);
+        if(uuid == null) {
+            uuid = UUID.randomUUID().toString()+"_"+ Util.hashTimeStamp();
+            SharedPreferences.Editor edit = uniqueIdPref.edit();
+            edit.putString(com.mobiperf.Config.PREF_KEY_UNIQUE_ID, uuid);
+            edit.apply();
         }
-        return deviceId;
+        return uuid;
     }
 
 

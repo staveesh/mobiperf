@@ -116,9 +116,9 @@ public interface Config {
 
 
   /** Constants to access the server **/
-  String SERVER_ADDRESS="192.168.1.77";
+  String SERVER_ADDRESS="jchavula-1.cs.uct.ac.za";
   int SERVER_PORT=7800;
-  String SERVER_HOST_ADDRESS = "192.168.1.77";
+  String SERVER_HOST_ADDRESS = "jchavula-1.cs.uct.ac.za";
   String PREF_KEY_UNIQUE_ID = "PREF_KEY_UNIQUE_ID";
 
     /** Enum for all the permissions that we need*/
