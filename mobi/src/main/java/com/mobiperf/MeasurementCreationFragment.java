@@ -49,6 +49,7 @@ import com.mobiperf.util.MLabNS;
 
 import java.security.InvalidParameterException;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -231,13 +232,13 @@ public class MeasurementCreationFragment extends Fragment {
             EditText pingTargetText = getView().findViewById(id.pingTargetText);
             Map<String, String> params = new HashMap<>();
             params.put("target", pingTargetText.getText().toString());
-            PingDesc desc = new PingDesc(null,
+            PingDesc desc = new PingDesc("USER_INITIATED",
                     Calendar.getInstance().getTime(),
                     null,
                     Config.DEFAULT_USER_MEASUREMENT_INTERVAL_SEC,
                     Config.DEFAULT_USER_MEASUREMENT_COUNT,
                     MeasurementTask.USER_PRIORITY,
-                    params, 1);
+                    params, 1, new Date(), new Date());
             newTask = new PingTask(desc, getActivity().getApplicationContext());
             break;
           }
@@ -246,13 +247,13 @@ public class MeasurementCreationFragment extends Fragment {
             Map<String, String> params = new HashMap<>();
             params.put("url", httpUrlText.getText().toString());
             params.put("method", "get");
-            HttpDesc desc = new HttpDesc(null,
+            HttpDesc desc = new HttpDesc("USER_INITIATED",
                     Calendar.getInstance().getTime(),
                     null,
                     Config.DEFAULT_USER_MEASUREMENT_INTERVAL_SEC,
                     Config.DEFAULT_USER_MEASUREMENT_COUNT,
                     MeasurementTask.USER_PRIORITY,
-                    params, 1);
+                    params, 1, new Date(), new Date());
             newTask = new HttpTask(desc, getActivity().getApplicationContext());
             break;
           }
@@ -260,13 +261,13 @@ public class MeasurementCreationFragment extends Fragment {
             EditText targetText = getView().findViewById(id.tracerouteTargetText);
             Map<String, String> params = new HashMap<>();
             params.put("target", targetText.getText().toString());
-            TracerouteDesc desc = new TracerouteDesc(null,
+            TracerouteDesc desc = new TracerouteDesc("USER_INITIATED",
                     Calendar.getInstance().getTime(),
                     null,
                     Config.DEFAULT_USER_MEASUREMENT_INTERVAL_SEC,
                     Config.DEFAULT_USER_MEASUREMENT_COUNT,
                     MeasurementTask.USER_PRIORITY,
-                    params, 1);
+                    params, 1, new Date(), new Date());
             newTask =
                     new TracerouteTask(desc, getActivity().getApplicationContext());
             showLengthWarning = true;
@@ -276,13 +277,13 @@ public class MeasurementCreationFragment extends Fragment {
             EditText dnsTargetText = getView().findViewById(id.dnsLookupText);
             Map<String, String> params = new HashMap<>();
             params.put("target", dnsTargetText.getText().toString());
-            DnsLookupDesc desc = new DnsLookupDesc(null,
+            DnsLookupDesc desc = new DnsLookupDesc("USER_INITIATED",
                     Calendar.getInstance().getTime(),
                     null,
                     Config.DEFAULT_USER_MEASUREMENT_INTERVAL_SEC,
                     Config.DEFAULT_USER_MEASUREMENT_COUNT,
                     MeasurementTask.USER_PRIORITY,
-                    params, 1);
+                    params, 1, new Date(), new Date());
             newTask =
                     new DnsLookupTask(desc, getActivity().getApplicationContext());
             break;
@@ -309,13 +310,13 @@ public class MeasurementCreationFragment extends Fragment {
             params.put("udp_interval"
                     , UDPBurstIntervalText.getText().toString());
 
-            UDPBurstDesc desc = new UDPBurstDesc(null,
+            UDPBurstDesc desc = new UDPBurstDesc("USER_INITIATED",
                     Calendar.getInstance().getTime(),
                     null,
                     Config.DEFAULT_USER_MEASUREMENT_INTERVAL_SEC,
                     Config.DEFAULT_USER_MEASUREMENT_COUNT,
                     MeasurementTask.USER_PRIORITY,
-                    params, 1);
+                    params, 1, new Date(), new Date());
             newTask = new UDPBurstTask(desc
                     , getActivity().getApplicationContext());
             break;
@@ -324,13 +325,13 @@ public class MeasurementCreationFragment extends Fragment {
             Map<String, String> params = new HashMap<>();
             params.put("target", MLabNS.TARGET);
             params.put("dir_up", tcpDir);
-            TCPThroughputDesc desc = new TCPThroughputDesc(null,
+            TCPThroughputDesc desc = new TCPThroughputDesc("USER_INITIATED",
                     Calendar.getInstance().getTime(),
                     null,
                     Config.DEFAULT_USER_MEASUREMENT_INTERVAL_SEC,
                     Config.DEFAULT_USER_MEASUREMENT_COUNT,
                     MeasurementTask.USER_PRIORITY,
-                    params, 1);
+                    params, 1, new Date(), new Date());
             newTask = new TCPThroughputTask(desc,
                     getActivity().getApplicationContext());
             showLengthWarning = true;

@@ -116,10 +116,10 @@ public class UDPBurstTask extends MeasurementTask {
     
     public UDPBurstDesc(String key, Date startTime, Date endTime,
         double intervalSec, long count, long priority,
-        Map<String, String> params, int instanceNumber)
+        Map<String, String> params, int instanceNumber, Date addedToQueueAt, Date dispatchTime)
         throws InvalidParameterException {
       super(UDPBurstTask.TYPE, key, startTime, endTime, intervalSec,
-          count, priority, params, instanceNumber);
+          count, priority, params, instanceNumber, addedToQueueAt, dispatchTime);
       initializeParams(params);
       if (this.target == null || this.target.length() == 0) {
         throw new InvalidParameterException("UDPBurstTask null target");
@@ -139,7 +139,7 @@ public class UDPBurstTask extends MeasurementTask {
         return;
       }
 
-      this.target = params.get("target");
+      this.target = Config.SPEED_TEST_SERVER_ADDRESS;
 
 
       try {
@@ -197,7 +197,7 @@ public class UDPBurstTask extends MeasurementTask {
 
   public UDPBurstTask(MeasurementDesc desc, Context context) {
     super(new UDPBurstDesc(desc.key, desc.startTime, desc.endTime,
-        desc.intervalSec, desc.count, desc.priority, desc.parameters, desc.instanceNumber), context);
+        desc.intervalSec, desc.count, desc.priority, desc.parameters, desc.instanceNumber, desc.addedToQueueAt, desc.dispatchTime), context);
     this.context = context;
     dataConsumed = 0;
   }
@@ -210,7 +210,7 @@ public class UDPBurstTask extends MeasurementTask {
     MeasurementDesc desc = this.measurementDesc;
     UDPBurstDesc newDesc = new UDPBurstDesc(desc.key, desc.startTime,
         desc.endTime, desc.intervalSec, desc.count, desc.priority,
-        desc.parameters, desc.instanceNumber);
+        desc.parameters, desc.instanceNumber, desc.addedToQueueAt, desc.dispatchTime);
     return new UDPBurstTask(newDesc, context);
   }
 
@@ -685,8 +685,8 @@ public class UDPBurstTask extends MeasurementTask {
 //          +
 //          " for UDPBurstTask");
 //    }
-    desc.target = Config.SERVER_ADDRESS;
-    Logger.i("Setting target to: " + desc.target);
+//    desc.target = Config.SERVER_ADDRESS;
+//    Logger.i("Setting target to: " + desc.target);
     
     PhoneUtils phoneUtils = PhoneUtils.getPhoneUtils();
 

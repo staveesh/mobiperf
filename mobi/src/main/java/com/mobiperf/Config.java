@@ -113,12 +113,9 @@ public interface Config {
   
   /** Constants for the splash screen */
   long SPLASH_SCREEN_DURATION_MSEC = 1500;
-
-
-  /** Constants to access the server **/
-  String SERVER_ADDRESS="jchavula-1.cs.uct.ac.za";
+  String SPEED_TEST_SERVER_ADDRESS = "192.168.0.122";
   int SERVER_PORT=7800;
-  String SERVER_HOST_ADDRESS = "jchavula-1.cs.uct.ac.za";
+  String SERVER_HOST_ADDRESS = "192.168.0.122";
   String PREF_KEY_UNIQUE_ID = "PREF_KEY_UNIQUE_ID";
 
     /** Enum for all the permissions that we need*/

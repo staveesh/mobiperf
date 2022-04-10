@@ -91,7 +91,7 @@ public class TCPThroughputTask extends MeasurementTask {
   // class constructor
   public TCPThroughputTask(MeasurementDesc desc, Context context) {
     super(new TCPThroughputDesc(desc.key, desc.startTime, desc.endTime, 
-          desc.intervalSec, desc.count, desc.priority, desc.parameters, desc.instanceNumber), context);
+          desc.intervalSec, desc.count, desc.priority, desc.parameters, desc.instanceNumber, desc.addedToQueueAt, desc.dispatchTime), context);
     this.context = context;
     Logger.i("Create new throughput task");
   }
@@ -121,10 +121,10 @@ public class TCPThroughputTask extends MeasurementTask {
 
     public TCPThroughputDesc(String key, Date startTime,
                              Date endTime, double intervalSec, long count, 
-                             long priority, Map<String, String> params, int instanceNumber)
+                             long priority, Map<String, String> params, int instanceNumber, Date addedToQueueAt, Date dispatchTime)
                              throws InvalidParameterException {
       super(TCPThroughputTask.TYPE, key, startTime, endTime, intervalSec, count,
-            priority, params, instanceNumber);
+            priority, params, instanceNumber, addedToQueueAt, dispatchTime);
       initializeParams(params);
       if (this.target == null || this.target.length() == 0) {
         throw new InvalidParameterException("TCPThroughputTask null target");
@@ -137,7 +137,7 @@ public class TCPThroughputTask extends MeasurementTask {
         return;
       }
 
-      this.target = params.get("target");
+      this.target = Config.SPEED_TEST_SERVER_ADDRESS;
 
       try {
         String readVal = null;
@@ -252,7 +252,7 @@ public class TCPThroughputTask extends MeasurementTask {
     TCPThroughputDesc newDesc = new TCPThroughputDesc(
                                 desc.key, desc.startTime, 
                                 desc.endTime, desc.intervalSec, desc.count, desc.priority,
-                                desc.parameters, desc.instanceNumber);
+                                desc.parameters, desc.instanceNumber, desc.addedToQueueAt, desc.dispatchTime);
     return new TCPThroughputTask(newDesc, parent);
   }
 
@@ -300,7 +300,8 @@ public class TCPThroughputTask extends MeasurementTask {
   public MeasurementResult call() throws MeasurementError {
     boolean isMeasurementSuccessful = false;
     TCPThroughputDesc desc = (TCPThroughputDesc)measurementDesc;
-    
+    long expStartTime = System.currentTimeMillis();
+    long expEndTime = 0;
     // Apply MLabNS lookup to fetch FQDN
     if (!desc.target.equals(MLabNS.TARGET)) {
       Logger.i("Not using MLab server!");
@@ -318,8 +319,8 @@ public class TCPThroughputTask extends MeasurementTask {
 //    } catch (InvalidParameterException e) {
 //      throw new MeasurementError(e.getMessage());
 //    }
-    desc.target = Config.SERVER_ADDRESS;
-    Logger.i("Setting target to: " + desc.target);
+//    desc.target = Config.SERVER_ADDRESS;
+//    Logger.i("Setting target to: " + desc.target);
     
     PhoneUtils phoneUtils = PhoneUtils.getPhoneUtils();
 
@@ -345,6 +346,7 @@ public class TCPThroughputTask extends MeasurementTask {
         downlink();
         Logger.i("Downlink measurement result is:");
       }
+      expEndTime = System.currentTimeMillis();
       isMeasurementSuccessful = true;
     } catch (MeasurementError e) {
       isMeasurementSuccessful = false;
@@ -363,6 +365,8 @@ public class TCPThroughputTask extends MeasurementTask {
                                this.measurementDesc, (long) (this.taskDuration*1000));
     // TODO (Haokun): add more results if necessary
     if(isMeasurementSuccessful) {
+      result.addResult("expStart", expStartTime);
+      result.addResult("expEnd", expEndTime);
       result.addResult("tcp_speed_results", this.samplingResults);
       result.addResult("data_limit_exceeded", this.DATA_LIMIT_EXCEEDED);
       result.addResult("duration", this.taskDuration);

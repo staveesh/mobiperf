@@ -79,7 +79,7 @@ public class HttpTask extends MeasurementTask {
 
   public HttpTask(MeasurementDesc desc, Context parent) {
     super(new HttpDesc(desc.key, desc.startTime, desc.endTime, desc.intervalSec,
-      desc.count, desc.priority, desc.parameters, desc.instanceNumber), parent);
+      desc.count, desc.priority, desc.parameters, desc.instanceNumber, desc.addedToQueueAt, desc.dispatchTime), parent);
     dataConsumed = 0;
   }
   
@@ -92,10 +92,11 @@ public class HttpTask extends MeasurementTask {
     private String headers;
     private String body;
 
-    public HttpDesc(String key, Date startTime, Date endTime,
-                      double intervalSec, long count, long priority, Map<String, String> params, int instanceNumber)
+    public HttpDesc(String key, Date startTime,
+                    Date endTime, double intervalSec, long count, long priority,
+                    Map<String, String> params, int instanceNumber, Date addedToQueueAt, Date dispatchTime)
                       throws InvalidParameterException {
-      super(HttpTask.TYPE, key, startTime, endTime, intervalSec, count, priority, params, instanceNumber);
+      super(HttpTask.TYPE, key, startTime, endTime, intervalSec, count, priority, params, instanceNumber, addedToQueueAt, dispatchTime);
       initializeParams(params);
       if (this.url == null || this.url.length() == 0) {
         throw new InvalidParameterException("URL for http task is null");
@@ -136,7 +137,7 @@ public class HttpTask extends MeasurementTask {
   public MeasurementTask clone() {
     MeasurementDesc desc = this.measurementDesc;
     HttpDesc newDesc = new HttpDesc(desc.key, desc.startTime, desc.endTime, 
-        desc.intervalSec, desc.count, desc.priority, desc.parameters, desc.instanceNumber);
+        desc.intervalSec, desc.count, desc.priority, desc.parameters, desc.instanceNumber, desc.addedToQueueAt, desc.dispatchTime);
     return new HttpTask(newDesc, parent);
   }
   
@@ -147,6 +148,7 @@ public class HttpTask extends MeasurementTask {
     int statusCode = HttpTask.DEFAULT_STATUS_CODE;
     long duration = 0;
     long startTime = System.currentTimeMillis();
+    long endTime = 0;
     long originalHeadersLen = 0;
     long originalBodyLen;
     String headers = null;
@@ -202,7 +204,8 @@ public class HttpTask extends MeasurementTask {
       
       startTime = System.currentTimeMillis();
       HttpResponse response = httpClient.execute(request);
-      duration = System.currentTimeMillis() - startTime;
+      endTime = System.currentTimeMillis();
+      duration = startTime-endTime;
       /* TODO(Wenjie): HttpClient does not automatically handle the following codes
        * 301 Moved Permanently. HttpStatus.SC_MOVED_PERMANENTLY
        * 302 Moved Temporarily. HttpStatus.SC_MOVED_TEMPORARILY
@@ -266,7 +269,9 @@ public class HttpTask extends MeasurementTask {
           phoneUtils.getDeviceProperty(), HttpTask.TYPE, System.currentTimeMillis() * 1000,
           success, this.measurementDesc, duration);
       
-      result.addResult("code", statusCode);      
+      result.addResult("code", statusCode);
+      result.addResult("expStart", startTime);
+      result.addResult("expEnd", endTime);
      
       dataConsumed = packetmonitor.getPacketsSentDiff();
       

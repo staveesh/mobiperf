@@ -55,10 +55,11 @@ public class DnsLookupTask extends MeasurementTask {
     public String target;
     private String server;
     
-    public DnsLookupDesc(String key, Date startTime, Date endTime,
-        double intervalSec, long count, long priority, Map<String, String> params, int instanceNumber) {
+    public DnsLookupDesc(String key, Date startTime,
+                         Date endTime, double intervalSec, long count, long priority,
+                         Map<String, String> params, int instanceNumber, Date addedToQueueAt, Date dispatchTime) {
       super(DnsLookupTask.TYPE, key, startTime, endTime, intervalSec, count,
-          priority, params, instanceNumber);
+          priority, params, instanceNumber, addedToQueueAt, dispatchTime);
       initializeParams(params);
       if (this.target == null || this.target.length() == 0) {
         throw new InvalidParameterException("LookupDnsTask cannot be created due " +
@@ -88,7 +89,7 @@ public class DnsLookupTask extends MeasurementTask {
   
   public DnsLookupTask(MeasurementDesc desc, Context parent) {
     super(new DnsLookupDesc(desc.key, desc.startTime, desc.endTime, desc.intervalSec,
-      desc.count, desc.priority, desc.parameters, desc.instanceNumber), parent);
+      desc.count, desc.priority, desc.parameters, desc.instanceNumber, desc.addedToQueueAt, desc.dispatchTime), parent);
   }
   
   /**
@@ -98,7 +99,7 @@ public class DnsLookupTask extends MeasurementTask {
   public MeasurementTask clone() {
     MeasurementDesc desc = this.measurementDesc;
     DnsLookupDesc newDesc = new DnsLookupDesc(desc.key, desc.startTime, desc.endTime, 
-      desc.intervalSec, desc.count, desc.priority, desc.parameters, desc.instanceNumber);
+      desc.intervalSec, desc.count, desc.priority, desc.parameters, desc.instanceNumber, desc.addedToQueueAt, desc.dispatchTime);
     return new DnsLookupTask(newDesc, parent);
   }
 
@@ -131,6 +132,8 @@ public class DnsLookupTask extends MeasurementTask {
       MeasurementResult result = new MeasurementResult(phoneUtils.getDeviceInfo().deviceId,
           phoneUtils.getDeviceProperty(), DnsLookupTask.TYPE, System.currentTimeMillis() * 1000,
           resultInet != null, this.measurementDesc, t2-t1);
+      result.addResult("expStart", t1);
+      result.addResult("expEnd", t2);
       if(resultInet != null) {
         result.addResult("address", resultInet.getHostAddress());
         result.addResult("realHostname", resultInet.getCanonicalHostName());

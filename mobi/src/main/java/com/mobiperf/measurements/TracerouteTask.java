@@ -86,9 +86,9 @@ public class TracerouteTask extends MeasurementTask {
     
     public TracerouteDesc(String key, Date startTime,
                           Date endTime, double intervalSec, long count, long priority, 
-                          Map<String, String> params, int instanceNumber) throws InvalidParameterException {
+                          Map<String, String> params, int instanceNumber, Date addedToQueueAt, Date dispatchTime) throws InvalidParameterException {
       super(TracerouteTask.TYPE, key, startTime, endTime, intervalSec, count, 
-          priority, params, instanceNumber);
+          priority, params, instanceNumber, addedToQueueAt, dispatchTime);
       initializeParams(params);
       
       if (target == null || target.length() == 0) {
@@ -151,7 +151,7 @@ public class TracerouteTask extends MeasurementTask {
   
   public TracerouteTask(MeasurementDesc desc, Context parent) {
     super(new TracerouteDesc(desc.key, desc.startTime, desc.endTime, desc.intervalSec,
-      desc.count, desc.priority, desc.parameters, desc.instanceNumber), parent);
+      desc.count, desc.priority, desc.parameters, desc.instanceNumber, desc.addedToQueueAt, desc.dispatchTime), parent);
     dataConsumed = 0;
   }
   
@@ -162,7 +162,7 @@ public class TracerouteTask extends MeasurementTask {
   public MeasurementTask clone() {
     MeasurementDesc desc = this.measurementDesc;
     TracerouteDesc newDesc = new TracerouteDesc(desc.key, desc.startTime, desc.endTime, 
-      desc.intervalSec, desc.count, desc.priority, desc.parameters, desc.instanceNumber);
+      desc.intervalSec, desc.count, desc.priority, desc.parameters, desc.instanceNumber, desc.addedToQueueAt, desc.dispatchTime);
     return new TracerouteTask(newDesc, parent);
   }
 
@@ -193,12 +193,13 @@ public class TracerouteTask extends MeasurementTask {
         throw new MeasurementError("Ping Executable not found");
       }
     } catch (UnknownHostException e) {
-      Logger.e("Cannont resolve host " + target);
+      Logger.e("Cannot resolve host " + target);
       throw new MeasurementError("target " + target + " cannot be resolved");
     }
     MeasurementResult result = null;
     long duration = 0;
     long startTime = System.currentTimeMillis();
+    long endTime = 0;
     while (maxHopCount-- >= 0 && !stopRequested) {
       /* Current traceroute implementation sends out three ICMP probes per TTL.
        * One ping every 0.2s is the lower bound before some platforms requires
@@ -270,6 +271,7 @@ public class TracerouteTask extends MeasurementTask {
         // Process the extracted IPs of intermediate hops
         StringBuffer progressStr = new StringBuffer(ttl + ": ");
         for (String ip : hostsAtThisDistance) {
+          endTime = System.currentTimeMillis();
           // If we have reached the final destination hostIp, print it out and clean up
           if (ip.compareTo(hostIp) == 0) {
             Logger.i(ttl + ": " + hostIp);
@@ -290,6 +292,8 @@ public class TracerouteTask extends MeasurementTask {
               }
               result.addResult("hop_" + i + "_rtt_ms", String.format("%.3f", hopInfo.rtt));
             }
+            result.addResult("expStart", startTime);
+            result.addResult("expEnd", endTime);
             String jsonResultString=MeasurementJsonConvertor.toJsonString(result);
             Logger.i(jsonResultString);
             WebSocketConnector.getInstance().sendMessage(Config.STOMP_SERVER_JOB_RESULT_ENDPOINT, jsonResultString);

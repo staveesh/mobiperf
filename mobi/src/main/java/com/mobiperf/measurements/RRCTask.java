@@ -152,9 +152,9 @@ public class RRCTask extends MeasurementTask {
 
     public RRCDesc(String key, Date startTime, Date endTime,
         double intervalSec, long count, long priority,
-        Map<String, String> params, int instanceNumber) {
+        Map<String, String> params, int instanceNumber, Date addedToQueueAt, Date dispatchTime) {
       super(RRCTask.TYPE, key, startTime, endTime, intervalSec, count,
-          priority, params, instanceNumber);
+          priority, params, instanceNumber,addedToQueueAt, dispatchTime);
       initializeParams(params);
     }
 
@@ -705,7 +705,7 @@ public class RRCTask extends MeasurementTask {
 
   public RRCTask(MeasurementDesc desc, Context parent) {
     super(new RRCDesc(desc.key, desc.startTime, desc.endTime, desc.intervalSec,
-        desc.count, desc.priority, desc.parameters, desc.instanceNumber), parent);
+        desc.count, desc.priority, desc.parameters, desc.instanceNumber, desc.addedToQueueAt, desc.dispatchTime), parent);
     context = parent;
   }
 
@@ -714,7 +714,7 @@ public class RRCTask extends MeasurementTask {
     MeasurementDesc desc = this.measurementDesc;
     RRCDesc newDesc =
         new RRCDesc(desc.key, desc.startTime, desc.endTime, desc.intervalSec,
-            desc.count, desc.priority, desc.parameters, desc.instanceNumber);
+            desc.count, desc.priority, desc.parameters, desc.instanceNumber, desc.addedToQueueAt, desc.dispatchTime);
     return new RRCTask(newDesc, parent);
   }
 

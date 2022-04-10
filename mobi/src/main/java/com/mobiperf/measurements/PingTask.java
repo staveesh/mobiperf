@@ -81,44 +81,44 @@ public class PingTask extends MeasurementTask {
    * @author wenjiezeng@google.com (Steve Zeng)
    *
    */
-  public static class PingDesc extends MeasurementDesc {     
+  public static class PingDesc extends MeasurementDesc {
     public String pingExe = null;
     // Host address either in the numeric form or domain names
     public String target = null;
-    // The payload size in bytes of the ICMP packet    
-    public int packetSizeByte = PingTask.DEFAULT_PING_PACKET_SIZE;  
+    // The payload size in bytes of the ICMP packet
+    public int packetSizeByte = PingTask.DEFAULT_PING_PACKET_SIZE;
     public int pingTimeoutSec = PingTask.DEFAULT_PING_TIMEOUT;
 
 
     public PingDesc(String key, Date startTime,
-                    Date endTime, double intervalSec, long count, long priority, 
-                    Map<String, String> params, int instanceNumber) throws InvalidParameterException {
+                    Date endTime, double intervalSec, long count, long priority,
+                    Map<String, String> params, int instanceNumber, Date addedToQueueAt, Date dispatchTime) throws InvalidParameterException {
       super(PingTask.TYPE, key, startTime, endTime, intervalSec, count,
-          priority, params, instanceNumber);
+              priority, params, instanceNumber, addedToQueueAt, dispatchTime);
       initializeParams(params);
       if (this.target == null || this.target.length() == 0) {
         throw new InvalidParameterException("PingTask cannot be created due "
-            + " to null target string");
-      }    
+                + " to null target string");
+      }
     }
-    
+
     @Override
     protected void initializeParams(Map<String, String> params) {
       if (params == null) {
         return;
       }
-      
+
       this.target = params.get("target");
-      
-      try {        
+
+      try {
         String val = null;
         if ((val = params.get("packet_size_byte")) != null && val.length() > 0 &&
-            Integer.parseInt(val) > 0) {
-          this.packetSizeByte = Integer.parseInt(val);  
+                Integer.parseInt(val) > 0) {
+          this.packetSizeByte = Integer.parseInt(val);
         }
         if ((val = params.get("ping_timeout_sec")) != null && val.length() > 0 &&
-            Integer.parseInt(val) > 0) {
-          this.pingTimeoutSec = Integer.parseInt(val);  
+                Integer.parseInt(val) > 0) {
+          this.pingTimeoutSec = Integer.parseInt(val);
         }
       } catch (NumberFormatException e) {
         throw new InvalidParameterException("PingTask cannot be created due to invalid params");
@@ -128,17 +128,17 @@ public class PingTask extends MeasurementTask {
     @Override
     public String getType() {
       return PingTask.TYPE;
-    }  
+    }
   }
   
   @SuppressWarnings("rawtypes")
   public static Class getDescClass() throws InvalidClassException {
     return PingDesc.class;
   }
-  
+
   public PingTask(MeasurementDesc desc, Context parent) {
     super(new PingDesc(desc.key, desc.startTime, desc.endTime, desc.intervalSec,
-      desc.count, desc.priority, desc.parameters, desc.instanceNumber), parent);
+            desc.count, desc.priority, desc.parameters, desc.instanceNumber, desc.addedToQueueAt, desc.dispatchTime), parent);
     dataConsumed = 0;
   }
   
@@ -148,8 +148,8 @@ public class PingTask extends MeasurementTask {
   @Override
   public MeasurementTask clone() {
     MeasurementDesc desc = this.measurementDesc;
-    PingDesc newDesc = new PingDesc(desc.key, desc.startTime, desc.endTime, 
-          desc.intervalSec, desc.count, desc.priority, desc.parameters, desc.instanceNumber);
+    PingDesc newDesc = new PingDesc(desc.key, desc.startTime, desc.endTime,
+            desc.intervalSec, desc.count, desc.priority, desc.parameters, desc.instanceNumber, desc.addedToQueueAt, desc.dispatchTime);
     return new PingTask(newDesc, parent);
   }
   
@@ -212,17 +212,14 @@ public class PingTask extends MeasurementTask {
   public int getProgress() {
     return this.progress;
   }
-  
+
   private MeasurementResult constructResult(ArrayList<Double> rrtVals, double packetLoss,
-                                            int packetsSent, long duration, String pingMethod, boolean success) {
+                                            int packetsSent, long expStart, long expEnd, String pingMethod, boolean success) {
 
-    PhoneUtils phoneUtils = PhoneUtils.getPhoneUtils();
+    MeasurementResult result = new MeasurementResult(PhoneUtils.getPhoneUtils().getDeviceId(), PhoneUtils.getPhoneUtils().getDeviceProperty(), PingTask.TYPE, System.currentTimeMillis() * 1000,
+            success, this.measurementDesc, expEnd - expStart);
 
-    MeasurementResult result = new MeasurementResult(phoneUtils.getDeviceInfo().deviceId,
-            phoneUtils.getDeviceProperty(), PingTask.TYPE, System.currentTimeMillis() * 1000,
-            success, this.measurementDesc, duration);
-
-    if(success){
+    if (success) {
       double min = Double.MAX_VALUE;
       double max = Double.MIN_VALUE;
       double mdev, avg, filteredAvg;
@@ -246,7 +243,9 @@ public class PingTask extends MeasurementTask {
       mdev = Util.getStandardDeviation(rrtVals, avg);
       filteredAvg = filterPingResults(rrtVals, avg);
 
-      result.addResult("time_ms", duration);
+      result.addResult("expStart", expStart);
+      result.addResult("expEnd", expEnd);
+      result.addResult("time_ms", expEnd - expStart);
       result.addResult("target_ip", targetIp);
       result.addResult("mean_rtt_ms", avg);
       result.addResult("min_rtt_ms", min);
@@ -309,7 +308,7 @@ public class PingTask extends MeasurementTask {
       throw new MeasurementError("Ping executable not found");
     }
     long startTime = System.currentTimeMillis();
-    long duration;
+    long endTime = 0;
     try {
       String command = Util.constructCommand(pingTask.pingExe, "-i", 
           Config.DEFAULT_INTERVAL_BETWEEN_ICMP_PACKET_SEC,
@@ -317,7 +316,7 @@ public class PingTask extends MeasurementTask {
           Config.PING_COUNT_PER_MEASUREMENT, targetIp);
       Logger.i("Running: " + command);
       pingProc = Runtime.getRuntime().exec(command);
-      duration = System.currentTimeMillis()-startTime;
+      endTime = System.currentTimeMillis();
       dataConsumed += pingTask.packetSizeByte * Config.PING_COUNT_PER_MEASUREMENT * 2;
       
       // Grab the output of the process that runs the ping command
@@ -364,7 +363,7 @@ public class PingTask extends MeasurementTask {
       if (packetLoss == Double.MIN_VALUE) {
         packetLoss = 1 - ((double) rrts.size() / (double) Config.PING_COUNT_PER_MEASUREMENT);
       }
-      measurementResult = constructResult(rrts, packetLoss, packetsSent,duration, PING_METHOD_CMD, true);
+      measurementResult = constructResult(rrts, packetLoss, packetsSent, startTime, endTime, PING_METHOD_CMD, true);
     } catch (IOException e) {
       Logger.e(e.getMessage());
       errorMsg += e.getMessage() + "\n";
@@ -384,7 +383,7 @@ public class PingTask extends MeasurementTask {
 
     if (measurementResult == null) {
       Logger.e("Error running ping: " + errorMsg);
-      measurementResult = constructResult(null, 0.0, 0, System.currentTimeMillis()-startTime, PING_METHOD_CMD,false);
+      measurementResult = constructResult(null, 0.0, 0, startTime, System.currentTimeMillis(), PING_METHOD_CMD,false);
     }
     return measurementResult;
   }
@@ -398,8 +397,9 @@ public class PingTask extends MeasurementTask {
     String errorMsg = "";
     MeasurementResult result = null;
     long startTime = System.currentTimeMillis();
+    long endTime = 0;
     long totalPingDelay = 0;
-    try {       
+    try {
       int timeOut = (int) (3000 * (double) pingTask.pingTimeoutSec /
             Config.PING_COUNT_PER_MEASUREMENT);
       int successfulPingCnt = 0;
@@ -407,6 +407,8 @@ public class PingTask extends MeasurementTask {
         pingStartTime = System.currentTimeMillis();
         boolean status = InetAddress.getByName(targetIp).isReachable(timeOut);
         pingEndTime = System.currentTimeMillis();
+        if(i == Config.PING_COUNT_PER_MEASUREMENT-1)
+          endTime = pingEndTime;
         long rrtVal = pingEndTime - pingStartTime;
         if (status) {
           totalPingDelay += rrtVal;
@@ -417,10 +419,10 @@ public class PingTask extends MeasurementTask {
       }
       Logger.i("java ping succeeds");
       double packetLoss = 1 - ((double) rrts.size() / (double) Config.PING_COUNT_PER_MEASUREMENT);
-      
+
       dataConsumed += pingTask.packetSizeByte * Config.PING_COUNT_PER_MEASUREMENT * 2;
-      
-      result = constructResult(rrts, packetLoss, Config.PING_COUNT_PER_MEASUREMENT, totalPingDelay, PING_METHOD_JAVA, true);
+
+      result = constructResult(rrts, packetLoss, Config.PING_COUNT_PER_MEASUREMENT, startTime, endTime, PING_METHOD_JAVA, true);
     } catch (IllegalArgumentException e) {
       Logger.e(e.getMessage());
       errorMsg += e.getMessage() + "\n";
@@ -432,7 +434,7 @@ public class PingTask extends MeasurementTask {
       Logger.i("java ping fails");
       Logger.e(errorMsg);
       totalPingDelay = System.currentTimeMillis() - startTime;
-      result = constructResult(rrts, 0.0, Config.PING_COUNT_PER_MEASUREMENT, totalPingDelay, PING_METHOD_JAVA, false);
+      result = constructResult(rrts, 0.0, Config.PING_COUNT_PER_MEASUREMENT, startTime, endTime, PING_METHOD_JAVA, false);
     }
     return result;
   }
@@ -477,7 +479,7 @@ public class PingTask extends MeasurementTask {
       Logger.i("HTTP get ping succeeds");
       Logger.i("RTT is " + rrts.toString());
       double packetLoss = 1 - ((double) rrts.size() / (double) Config.PING_COUNT_PER_MEASUREMENT);
-      result = constructResult(rrts, packetLoss, Config.PING_COUNT_PER_MEASUREMENT, duration, PING_METHOD_HTTP, true);
+      result = constructResult(rrts, packetLoss, Config.PING_COUNT_PER_MEASUREMENT, startTime, pingEndTime, PING_METHOD_JAVA, true);
       dataConsumed += pingTask.packetSizeByte * Config.PING_COUNT_PER_MEASUREMENT * 2;
       
     } catch (MalformedURLException e) {
@@ -490,7 +492,7 @@ public class PingTask extends MeasurementTask {
     if (result == null) {
       Logger.i("java ping fails");
       Logger.e(errorMsg);
-      result = constructResult(rrts, 0.0, Config.PING_COUNT_PER_MEASUREMENT, System.currentTimeMillis() - startTime, PING_METHOD_HTTP, false);
+      result = constructResult(rrts, 0.0, Config.PING_COUNT_PER_MEASUREMENT, startTime, pingEndTime, PING_METHOD_JAVA, false);
     }
     return result;
   }

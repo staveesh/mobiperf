@@ -869,48 +869,7 @@ public class PhoneUtils {
      * @return IP_TYPE_CANNOT_DECIDE, IP_TYPE_UNCONNECTIVITY, IP_TYPE_CONNECTIVITY
      */
     private int checkIPCompatibility(String ip_detect_type) {
-        if (!ip_detect_type.equals("ipv4") && !ip_detect_type.equals("ipv6")) {
-            return IP_TYPE_CANNOT_DECIDE;
-        }
-        Socket tcpSocket = new Socket();
-        try {
-            ArrayList<String> hostnameList = MLabNS.Lookup(context, "mobiperf",
-                    ip_detect_type, "ip");
-            // MLabNS returns at least one ip address
-            if (hostnameList.isEmpty())
-                return IP_TYPE_CANNOT_DECIDE;
-            // Use the first result in the element
-            String hostname = hostnameList.get(0);
-            SocketAddress remoteAddr = new InetSocketAddress(hostname, portNum);
-            tcpSocket.setTcpNoDelay(true);
-            tcpSocket.connect(remoteAddr, tcpTimeout);
-        } catch (ConnectException e) {
-            // Server is not reachable due to client not support ipv6
-            Logger.e("Connection exception is " + e.getMessage());
-            return IP_TYPE_UNCONNECTIVITY;
-        } catch (IOException e) {
-            // Client timer expired
-            Logger.e("Fail to setup TCP in checkIPCompatibility(). "
-                    + e.getMessage());
-            return IP_TYPE_CANNOT_DECIDE;
-        } catch (InvalidParameterException e) {
-            // MLabNS service lookup fail
-            Logger.e("InvalidParameterException in checkIPCompatibility(). "
-                    + e.getMessage());
-            return IP_TYPE_CANNOT_DECIDE;
-        } catch (IllegalArgumentException e) {
-            Logger.e("IllegalArgumentException in checkIPCompatibility(). "
-                    + e.getMessage());
-            return IP_TYPE_CANNOT_DECIDE;
-        } finally {
-            try {
-                tcpSocket.close();
-            } catch (IOException e) {
-                Logger.e("Fail to close TCP in checkIPCompatibility().");
-                return IP_TYPE_CANNOT_DECIDE;
-            }
-        }
-        return IP_TYPE_CONNECTIVITY;
+        return IP_TYPE_CANNOT_DECIDE;
     }
 
     /**
@@ -920,33 +879,6 @@ public class PhoneUtils {
      * @return DN_UNRESOLVABLE, DN_RESOLVABLE
      */
     private int checkDomainNameResolvable(String ip_detect_type) {
-        if (!ip_detect_type.equals("ipv4") && !ip_detect_type.equals("ipv6")) {
-            return DN_UNKNOWN;
-        }
-        try {
-            ArrayList<String> ipAddressList = MLabNS.Lookup(context, "mobiperf",
-                    ip_detect_type, "fqdn");
-            String ipAddress;
-            // MLabNS returns one fqdn each time
-            if (ipAddressList.size() == 1) {
-                ipAddress = ipAddressList.get(0);
-            } else {
-                return DN_UNKNOWN;
-            }
-            InetAddress inet = InetAddress.getByName(ipAddress);
-            if (inet != null)
-                return DN_RESOLVABLE;
-        } catch (UnknownHostException e) {
-            // Fail to resolve domain name
-            Logger.e("UnknownHostException in checkDomainNameResolvable() "
-                    + e.getMessage());
-            return DN_UNRESOLVABLE;
-        } catch (InvalidParameterException e) {
-            // Fail to resolve domain name
-            Logger.e("InvalidParameterException in checkIPCompatibility(). "
-                    + e.getMessage());
-            return DN_UNRESOLVABLE;
-        }
         return DN_UNKNOWN;
     }
 

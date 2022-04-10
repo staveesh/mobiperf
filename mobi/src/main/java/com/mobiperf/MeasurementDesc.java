@@ -22,13 +22,13 @@ import java.util.Date;
 import java.util.Map;
 
 /**
- * MeasurementDesc and all its subclasses are POJO classes that encode a measurement 
- * and enable easy (de)serialization. On the other hand {@link MeasurementTask} contains 
- * runtime specific information for task execution. 
- * @see MeasurementTask 
+ * MeasurementDesc and all its subclasses are POJO classes that encode a measurement
+ * and enable easy (de)serialization. On the other hand {@link MeasurementTask} contains
+ * runtime specific information for task execution.
+ * @see MeasurementTask
  */
 public abstract class MeasurementDesc {
-  
+
   // General parameters that are shared by all measurements
   public String type;
   public String key;
@@ -39,27 +39,29 @@ public abstract class MeasurementDesc {
   public long priority;
   public Map<String, String> parameters;
   public int instanceNumber;
-    
+  public Date addedToQueueAt;
+  public Date dispatchTime;
+
   /**
-   * @param type Type of measurement (ping, dns, traceroute, etc.) 
+   * @param type Type of measurement (ping, dns, traceroute, etc.)
    * that should execute this measurement task.
    * @param startTime Earliest time that measurements can be taken using this Task descriptor. The
    * current time will be used in place of a null startTime parameter. Measurements with
-   * a startTime more than 24 hours from now will NOT be run. 
-   * @param endTime Latest time that measurements can be taken using this Task descriptor. Tasks 
+   * a startTime more than 24 hours from now will NOT be run.
+   * @param endTime Latest time that measurements can be taken using this Task descriptor. Tasks
    * with an endTime before startTime will be canceled. Corresponding to the 24-hour rule in
-   * startTime, tasks with endTime later than 24 hours from now will be assigned a new endTime 
+   * startTime, tasks with endTime later than 24 hours from now will be assigned a new endTime
    * that ends 24 hours from now.
-   * @param intervalSec Minimum number of seconds to elapse between consecutive measurements taken 
+   * @param intervalSec Minimum number of seconds to elapse between consecutive measurements taken
    * with this description.
-   * @param count Maximum number of times that a measurement should be taken with this 
+   * @param count Maximum number of times that a measurement should be taken with this
    * description. A count of 0 means to continue the measurement indefinitely (until end_time).
    * @param priority Larger values represent higher priorities.
    * @param params Measurement parameters Measurement parameters.
    */
-  protected MeasurementDesc(String type, String key, Date startTime, 
-                            Date endTime, double intervalSec, long count, long priority, 
-                            Map<String, String> params, int instanceNumber) {
+  protected MeasurementDesc(String type, String key, Date startTime,
+                            Date endTime, double intervalSec, long count, long priority,
+                            Map<String, String> params, int instanceNumber, Date addedToQueueAt, Date dispatchTime) {
     super();
     this.type = type;
     this.key = key;
@@ -69,8 +71,8 @@ public abstract class MeasurementDesc {
       this.startTime = new Date(startTime.getTime());
     }
     long now = System.currentTimeMillis();
-    if (endTime == null || 
-        endTime.getTime() - now > Config.TASK_EXPIRATION_MSEC) {
+    if (endTime == null ||
+            endTime.getTime() - now > Config.TASK_EXPIRATION_MSEC) {
       this.endTime = new Date(now + Config.TASK_EXPIRATION_MSEC);
     } else {
       this.endTime = endTime;
@@ -84,31 +86,33 @@ public abstract class MeasurementDesc {
     this.priority = priority;
     this.parameters = params;
     this.instanceNumber = instanceNumber;
+    this.addedToQueueAt = addedToQueueAt;
+    this.dispatchTime = dispatchTime;
   }
-  
+
   /**
    * We might adjust the interval based on the data consumption profile.
-   * 
+   *
    * In that case, we need to update the start time accordingly.
    */
   public void updateStartTime() {
     Calendar now = Calendar.getInstance();
     now.add(Calendar.SECOND, (int)intervalSec);
     this.startTime = now.getTime();
-    
+
   }
-  
+
   /** Return the type of the measurement (DNS, Ping, Traceroute, etc.)*/
   public abstract String getType();
-  
+
   /** Subclass override this method to initialize measurement specific parameters*/
   protected abstract void initializeParams(Map<String, String> params);
-  
+
   @Override
   public String toString() {
     return "<MeasurementTask> " + this.type + " deadline:" + endTime +
-      " params:" + parameters;
-  }  
+            " params:" + parameters;
+  }
 
   /**
    * To determine if a task has changed when receiving a new schedule from
